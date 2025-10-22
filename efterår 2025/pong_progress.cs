@@ -9,10 +9,11 @@ var position = new Vector2(100, 100);
 var direction = new Vector2(1, 1);
 
 var playerPosition = new Vector2(20, 200);
-var playerSize = new Vector2(20, 150);
-var playerSpeed = 10;
+var playerSize = new Vector2(20, 125);
+var playerSpeed = 8;
 
 var enemyPosition = new Vector2(Raylib.GetScreenWidth() - 40, 200);
+var enemyDirection = new Vector2(0, 1);
 
 var speed = 5;
 
@@ -23,7 +24,6 @@ while (!Raylib.WindowShouldClose())
     MovePlayer();
     MoveEnemy();
 
-    position += direction * speed;
 
     if ((position.Y + radius) >= Raylib.GetScreenHeight()
         || position.Y - radius <= 0)
@@ -41,16 +41,19 @@ while (!Raylib.WindowShouldClose())
         Console.WriteLine("død");
     }
 
-
     if (Raylib.CheckCollisionCircleRec(position, radius, new Rectangle(playerPosition, playerSize)))
     {
         direction.X *= -1;
+        position.X += speed;
     }
 
     if (Raylib.CheckCollisionCircleRec(position, radius, new Rectangle(enemyPosition, playerSize)))
     {
         direction.X *= -1;
+        position.X -= speed;
     }
+
+    position += direction * speed;
 
     Console.WriteLine(position);
 
@@ -63,10 +66,10 @@ while (!Raylib.WindowShouldClose())
     var lineHeight = 0;
     var lineSize = 20;
 
-    while(lineHeight < Raylib.GetScreenHeight())
+    while (lineHeight < Raylib.GetScreenHeight())
     {
         Raylib.DrawLineEx(
-            new Vector2(Raylib.GetScreenWidth() / 2, lineHeight), 
+            new Vector2(Raylib.GetScreenWidth() / 2, lineHeight),
             new Vector2(Raylib.GetScreenWidth() / 2, lineHeight + lineSize), 3, Color.Black);
 
 
@@ -97,13 +100,30 @@ void MovePlayer()
 
 void MoveEnemy()
 {
-    if (position.Y > enemyPosition.Y + playerSize.Y / 2)
+
+
+    enemyPosition.Y = Raymath.Clamp(
+        enemyPosition.Y + playerSpeed * enemyDirection.Y,
+        0, Raylib.GetScreenHeight() - playerSize.Y);
+
+    if (enemyPosition.Y >= Raylib.GetScreenHeight() - playerSize.Y ||
+        enemyPosition.Y <= 0)
     {
-        enemyPosition.Y = Raymath.Clamp(enemyPosition.Y + playerSpeed, 0, Raylib.GetScreenHeight() - playerSize.Y);
+        enemyDirection.Y *= -1;
     }
 
-    if (position.Y < enemyPosition.Y + playerSize.Y / 2)
+    var distanceToBall = enemyPosition.X - position.X;
+
+    if (distanceToBall < 50)
     {
-        enemyPosition.Y = Raymath.Clamp(enemyPosition.Y - playerSpeed, 0, Raylib.GetScreenHeight() - playerSize.Y);
+        if (position.Y > enemyPosition.Y + playerSize.Y / 2)
+        {
+            enemyDirection.Y = 1;
+        }
+
+        if (position.Y < enemyPosition.Y + playerSize.Y / 2)
+        {
+            enemyDirection.Y = -1;
+        }
     }
 }
