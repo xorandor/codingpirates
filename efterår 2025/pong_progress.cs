@@ -2,11 +2,11 @@
 using Raylib_cs;
 using System.Numerics;
 
-Raylib.InitWindow(800, 600, "Pong Game");
+Raylib.InitWindow(1200, 800, "Pong Game");
 Raylib.SetTargetFPS(60);
 
-var position = new Vector2(100, 100);
-var direction = new Vector2(1, 1);
+var ballPosition = new Vector2(100, 100);
+var ballDirection = new Vector2(1, 1);
 
 var playerPosition = new Vector2(20, 200);
 var playerSize = new Vector2(20, 125);
@@ -19,43 +19,50 @@ var speed = 5;
 
 var radius = 20;
 
+var playerScore = 0;
+var enemyScore = 0;
+
 while (!Raylib.WindowShouldClose())
 {
     MovePlayer();
     MoveEnemy();
 
 
-    if ((position.Y + radius) >= Raylib.GetScreenHeight()
-        || position.Y - radius <= 0)
+    if ((ballPosition.Y + radius) >= Raylib.GetScreenHeight()
+        || ballPosition.Y - radius <= 0)
     {
-        direction.Y *= -1;
+        ballDirection.Y *= -1;
     }
 
-    if (position.X + radius >= Raylib.GetScreenWidth())
+    if (ballPosition.X + radius >= Raylib.GetScreenWidth())
     {
-        direction.X *= -1;
+        playerScore++;
+        ballPosition = new Vector2(600, 100);
+        ballDirection = new Vector2(-1, 1);
     }
 
-    if (position.X - radius <= 0)
+    if (ballPosition.X - radius <= 0)
     {
-        Console.WriteLine("død");
+        enemyScore++;
+        ballPosition = new Vector2(100, 100);
+        ballDirection = new Vector2(1, 1);
     }
 
-    if (Raylib.CheckCollisionCircleRec(position, radius, new Rectangle(playerPosition, playerSize)))
+    if (Raylib.CheckCollisionCircleRec(ballPosition, radius, new Rectangle(playerPosition, playerSize)))
     {
-        direction.X *= -1;
-        position.X += speed;
+        ballDirection.X *= -1;
+        ballPosition.X += speed;
     }
 
-    if (Raylib.CheckCollisionCircleRec(position, radius, new Rectangle(enemyPosition, playerSize)))
+    if (Raylib.CheckCollisionCircleRec(ballPosition, radius, new Rectangle(enemyPosition, playerSize)))
     {
-        direction.X *= -1;
-        position.X -= speed;
+        ballDirection.X *= -1;
+        ballPosition.X -= speed;
     }
 
-    position += direction * speed;
+    ballPosition += ballDirection * speed;
 
-    Console.WriteLine(position);
+    Console.WriteLine(ballPosition);
 
     // render
     Raylib.BeginDrawing();
@@ -76,11 +83,15 @@ while (!Raylib.WindowShouldClose())
         lineHeight += lineSize + 7;
     }
 
-
     Raylib.DrawRectangleV(playerPosition, playerSize, Color.Pink);
     Raylib.DrawRectangleV(enemyPosition, playerSize, Color.Red);
 
-    Raylib.DrawCircleV(position, radius, Color.Red);
+    Raylib.DrawCircleV(ballPosition, radius, Color.Red);
+
+    var playerScoreWidth = Raylib.MeasureText(playerScore.ToString(), 40);
+    Raylib.DrawText(playerScore.ToString(), Raylib.GetScreenWidth() / 2 - 50 - playerScoreWidth, 20, 40, Color.Black);
+
+    Raylib.DrawText(enemyScore.ToString(), Raylib.GetScreenWidth() / 2 + 50, 20, 40, Color.Black);
 
     Raylib.EndDrawing();
 }
@@ -112,16 +123,16 @@ void MoveEnemy()
         enemyDirection.Y *= -1;
     }
 
-    var distanceToBall = enemyPosition.X - position.X;
+    var distanceToBall = enemyPosition.X - ballPosition.X;
 
     if (distanceToBall < 50)
     {
-        if (position.Y > enemyPosition.Y + playerSize.Y / 2)
+        if (ballPosition.Y > enemyPosition.Y + playerSize.Y / 2)
         {
             enemyDirection.Y = 1;
         }
 
-        if (position.Y < enemyPosition.Y + playerSize.Y / 2)
+        if (ballPosition.Y < enemyPosition.Y + playerSize.Y / 2)
         {
             enemyDirection.Y = -1;
         }
