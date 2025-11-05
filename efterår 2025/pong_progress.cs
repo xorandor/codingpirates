@@ -4,7 +4,6 @@ using System.Numerics;
 
 Raylib.InitWindow(1200, 800, "Pong Game");
 Raylib.SetTargetFPS(60);
-
 var ballPosition = new Vector2(100, 100);
 var ballDirection = new Vector2(1, 1);
 
@@ -15,7 +14,7 @@ var playerSpeed = 8;
 var enemyPosition = new Vector2(Raylib.GetScreenWidth() - 40, 200);
 var enemyDirection = new Vector2(0, 1);
 
-var speed = 5;
+var speed = 5f;
 
 var radius = 20;
 
@@ -50,13 +49,13 @@ while (!Raylib.WindowShouldClose())
 
     if (Raylib.CheckCollisionCircleRec(ballPosition, radius, new Rectangle(playerPosition, playerSize)))
     {
-        ballDirection.X *= -1;
+        CalcAngle(false, playerPosition); 
         ballPosition.X += speed;
     }
 
     if (Raylib.CheckCollisionCircleRec(ballPosition, radius, new Rectangle(enemyPosition, playerSize)))
     {
-        ballDirection.X *= -1;
+        CalcAngle(true, enemyPosition);
         ballPosition.X -= speed;
     }
 
@@ -137,4 +136,40 @@ void MoveEnemy()
             enemyDirection.Y = -1;
         }
     }
+}
+
+void CalcAngle(bool isEnemy, Vector2 pos)
+{
+   var centerY = pos.Y + playerSize.Y / 2;
+   var deadZone = playerSize.Y * 0.1;
+   var maxAngle = 65f;
+   var outputAngle = 0f;
+
+   var distToCenterP = Math.Clamp(
+       Math.Abs((centerY - ballPosition.Y) / (playerSize.Y / 2)),
+       0, 1);
+   
+   maxAngle *= distToCenterP;
+
+   if (ballPosition.Y > centerY + deadZone)
+   {
+       outputAngle = -maxAngle;
+   } 
+   else if (ballPosition.Y < centerY - deadZone)
+   {
+       outputAngle = maxAngle;
+   }
+
+   if (isEnemy)
+   {
+       outputAngle = -180 - outputAngle;
+   }
+   
+   var radians = (Math.PI / 180) * outputAngle;
+   
+   
+   speed *= 1.15f;
+   
+   ballDirection.X = (float)Math.Cos(radians);
+   ballDirection.Y = (float)-Math.Sin(radians); 
 }
