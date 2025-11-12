@@ -14,7 +14,8 @@ var playerSpeed = 8;
 var enemyPosition = new Vector2(Raylib.GetScreenWidth() - 40, 200);
 var enemyDirection = new Vector2(0, 1);
 
-var speed = 5f;
+var defaultSpeed = 5f;
+var speed = defaultSpeed;
 
 var radius = 20;
 
@@ -38,6 +39,7 @@ while (!Raylib.WindowShouldClose())
         playerScore++;
         ballPosition = new Vector2(600, 100);
         ballDirection = new Vector2(-1, 1);
+        speed = defaultSpeed;
     }
 
     if (ballPosition.X - radius <= 0)
@@ -45,6 +47,7 @@ while (!Raylib.WindowShouldClose())
         enemyScore++;
         ballPosition = new Vector2(100, 100);
         ballDirection = new Vector2(1, 1);
+        speed = defaultSpeed;
     }
 
     if (Raylib.CheckCollisionCircleRec(ballPosition, radius, new Rectangle(playerPosition, playerSize)))
@@ -110,8 +113,6 @@ void MovePlayer()
 
 void MoveEnemy()
 {
-
-
     enemyPosition.Y = Raymath.Clamp(
         enemyPosition.Y + playerSpeed * enemyDirection.Y,
         0, Raylib.GetScreenHeight() - playerSize.Y);
