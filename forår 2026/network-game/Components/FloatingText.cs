@@ -22,7 +22,7 @@ public class FloatingText : IComponent
         _position = new Vector2(GetScreenWidth() / 2f, GetScreenHeight() / 2f);
     }
 
-    public void Update()
+    public void Update(UpdateContext context)
     {
         float delta = GetFrameTime();
         _position += _direction * _speed * delta;

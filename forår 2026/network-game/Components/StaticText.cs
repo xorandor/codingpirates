@@ -19,7 +19,7 @@ public class StaticText : IComponent
         _color = color;
     }
 
-    public void Update() { }
+    public void Update(UpdateContext context) { }
 
     public void Render()
     {

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Text;
 
 namespace Engine;
@@ -10,6 +11,8 @@ public class Networking
     private readonly TcpListener _listener;
     private TcpClient? _client;
     private readonly System.Collections.Concurrent.ConcurrentDictionary<TcpClient, string> _players = new();
+    private readonly List<NetworkMessage> _messageQueue = [];
+    private readonly object _messageQueueLock = new();
 
     public IPAddress LocalIp { get; }
     public string? ConnectedIp { get; private set; }
@@ -92,7 +95,10 @@ public class Networking
                 if (parts.Length >= 2)
                     _players[client] = parts[1];
                 break;
-            // Unknown commands are ignored per protocol
+            default:
+                lock (_messageQueueLock)
+                    _messageQueue.Add(new NetworkMessage(parts[0], parts[1..]));
+                break;
         }
     }
 
@@ -125,5 +131,36 @@ public class Networking
         if (_client == null || !_client.Connected) return;
         var bytes = Encoding.UTF8.GetBytes($"JOINED;{playerName}\n");
         _client.GetStream().Write(bytes);
+    }
+
+    public NetworkMessage? TryConsumeMessage(string command, Func<NetworkMessage, bool> match)
+    {
+        lock (_messageQueueLock)
+        {
+            var index = _messageQueue.FindIndex(m => m.Command == command && match(m));
+            if (index < 0) return null;
+            var msg = _messageQueue[index];
+            _messageQueue.RemoveAt(index);
+            return msg;
+        }
+    }
+
+    public void SendBoxMove(int boxId, Vector2 position)
+    {
+        if (_client == null || !_client.Connected) return;
+        var bytes = Encoding.UTF8.GetBytes($"BOXMOVE;{boxId};{(int)position.X};{(int)position.Y}\n");
+        _client.GetStream().Write(bytes);
+    }
+}
+
+public class NetworkMessage
+{
+    public string Command { get; }
+    public string[] Fields { get; }
+
+    public NetworkMessage(string command, string[] fields)
+    {
+        Command = command;
+        Fields = fields;
     }
 }

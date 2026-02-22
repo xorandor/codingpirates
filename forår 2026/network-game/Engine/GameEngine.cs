@@ -49,10 +49,12 @@ public class GameEngine
             }
         }
 
+        var context = new UpdateContext(_networking);
+
         while (!WindowShouldClose())
         {
             foreach (var component in _components)
-                component.Update();
+                component.Update(context);
 
             BeginDrawing();
             ClearBackground(_backgroundColor);
@@ -197,6 +199,23 @@ public class GameEngine
 
 public interface IComponent
 {
-    void Update();
+    void Update(UpdateContext context);
     void Render();
 }
+
+public class UpdateContext
+{
+    public Networking Networking { get; }
+
+    public UpdateContext(Networking networking)
+    {
+        Networking = networking;
+    }
+}
+
+public enum GameMode
+{
+    Client,
+    Server
+}
+
