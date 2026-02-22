@@ -1,4 +1,4 @@
-namespace Core;
+namespace Engine;
 
 public interface IComponent
 {

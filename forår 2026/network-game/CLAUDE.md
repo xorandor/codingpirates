@@ -12,7 +12,7 @@ Therefore the project is structured around the concept of individual components 
 be expressed as classes, following a basic object oriented structure
 
 The project has three concepts:
-- Core folder: Contains the basic framework that supports the components. Components and composition are allowed to reference this part of the project.
+- Engine folder: Contains the basic framework that supports the components and contains the core engine and game loop. Components and composition are allowed to reference this part of the project.
 - Components folder: Contains the individual components. A component must always be a single file without dependencies on other components. Only composition is allowed to refer this part of the project.
 - program.cs: Considered the composition of the project. This is where students compose the game into their own construction. The composition brings everything together, and hence is allowed to reference everything else.
 
