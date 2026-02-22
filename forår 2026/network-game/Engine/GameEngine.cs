@@ -30,17 +30,22 @@ public class GameEngine
         {
             var ip = RunIpEntryScreen();
 
-            if (WindowShouldClose())
-            {
-                CloseWindow();
-                return;
-            }
+            if (WindowShouldClose()) { CloseWindow(); return; }
 
-            if (ip != null && !_networking.TryConnect(ip))
+            if (ip != null)
             {
-                RunErrorScreen($"Could not connect to {ip}");
-                CloseWindow();
-                return;
+                if (!_networking.TryConnect(ip))
+                {
+                    RunErrorScreen($"Could not connect to {ip}");
+                    CloseWindow();
+                    return;
+                }
+
+                var name = RunNameEntryScreen();
+
+                if (WindowShouldClose()) { CloseWindow(); return; }
+
+                _networking.SendJoined(name);
             }
         }
 
@@ -56,6 +61,9 @@ public class GameEngine
                 component.Render();
 
             DrawStatusText();
+
+            if (_mode == GameMode.Server)
+                DrawPlayerList();
 
             EndDrawing();
         }
@@ -85,6 +93,20 @@ public class GameEngine
         int fontSize = 20;
         int textWidth = MeasureText(text, fontSize);
         DrawText(text, GetScreenWidth() - textWidth - 10, 10, fontSize, color);
+    }
+
+    private void DrawPlayerList()
+    {
+        var players = _networking.ConnectedPlayers;
+        int fontSize = 18;
+        int lineHeight = fontSize + 4;
+        int x = 10;
+        int totalLines = 1 + players.Count;
+        int startY = GetScreenHeight() - totalLines * lineHeight - 10;
+
+        DrawText("Players:", x, startY, fontSize, Color.Black);
+        for (int i = 0; i < players.Count; i++)
+            DrawText(players[i], x, startY + (i + 1) * lineHeight, fontSize, Color.DarkGray);
     }
 
     private string? RunIpEntryScreen()
@@ -117,6 +139,40 @@ public class GameEngine
         }
 
         return null;
+    }
+
+    private string RunNameEntryScreen()
+    {
+        while (GetKeyPressed() != 0) { } // drain leftover keypresses
+
+        var input = new System.Text.StringBuilder();
+
+        while (!WindowShouldClose())
+        {
+            int key;
+            while ((key = GetCharPressed()) != 0)
+            {
+                if (key >= 32 && key < 127)
+                    input.Append((char)key);
+            }
+
+            if (IsKeyPressed(KeyboardKey.Backspace) && input.Length > 0)
+                input.Remove(input.Length - 1, 1);
+
+            if (IsKeyPressed(KeyboardKey.Enter) && input.Length > 0)
+                return input.ToString();
+
+            BeginDrawing();
+            ClearBackground(_backgroundColor);
+
+            DrawText("Enter your name:", 100, 160, 24, Color.Black);
+            DrawText(input + "_", 100, 195, 24, Color.DarkGray);
+            DrawText("Press Enter to confirm", 100, 240, 16, Color.Gray);
+
+            EndDrawing();
+        }
+
+        return "";
     }
 
     private void RunErrorScreen(string message)

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Text;
 
 namespace Engine;
 
@@ -8,10 +9,12 @@ public class Networking
 {
     private readonly TcpListener _listener;
     private TcpClient? _client;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<TcpClient, string> _players = new();
 
     public IPAddress LocalIp { get; }
     public string? ConnectedIp { get; private set; }
     public bool IsConnected => _client?.Connected ?? false;
+    public IReadOnlyList<string> ConnectedPlayers => [.._players.Values];
 
     public Networking()
     {
@@ -54,12 +57,42 @@ public class Networking
             try
             {
                 var client = await _listener.AcceptTcpClientAsync();
-                client.Close();
+                _ = Task.Run(() => HandleClientAsync(client));
             }
             catch
             {
                 break;
             }
+        }
+    }
+
+    private async Task HandleClientAsync(TcpClient client)
+    {
+        try
+        {
+            using var reader = new StreamReader(client.GetStream(), Encoding.UTF8, leaveOpen: true);
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+                HandleMessage(line, client);
+        }
+        catch { }
+        finally
+        {
+            _players.TryRemove(client, out _);
+            client.Close();
+        }
+    }
+
+    private void HandleMessage(string line, TcpClient client)
+    {
+        var parts = line.Split(';');
+        switch (parts[0])
+        {
+            case "JOINED":
+                if (parts.Length >= 2)
+                    _players[client] = parts[1];
+                break;
+            // Unknown commands are ignored per protocol
         }
     }
 
@@ -85,5 +118,12 @@ public class Networking
             _client = null;
             return false;
         }
+    }
+
+    public void SendJoined(string playerName)
+    {
+        if (_client == null || !_client.Connected) return;
+        var bytes = Encoding.UTF8.GetBytes($"JOINED;{playerName}\n");
+        _client.GetStream().Write(bytes);
     }
 }
