@@ -12,4 +12,9 @@
     <PackageReference Include="Raylib-cs" Version="7.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Core\" />
+    <Folder Include="Components\" />
+  </ItemGroup>
+
 </Project>

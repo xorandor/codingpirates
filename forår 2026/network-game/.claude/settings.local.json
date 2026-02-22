@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\code\\\\codingpirates\\\\forår 2026\\\\network-game\" && dotnet build 2>&1)"
+    ]
+  }
+}
