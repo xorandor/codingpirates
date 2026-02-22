@@ -3,12 +3,12 @@ using static Raylib_cs.Raylib;
 
 namespace Engine;
 
-public class GameLoop
+public class GameEngine
 {
     private readonly List<IComponent> _components = [];
     private readonly Color _backgroundColor;
 
-    public GameLoop(Color backgroundColor)
+    public GameEngine(Color backgroundColor)
     {
         _backgroundColor = backgroundColor;
     }

@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Engine\" />
     <Folder Include="Components\" />
   </ItemGroup>
 
