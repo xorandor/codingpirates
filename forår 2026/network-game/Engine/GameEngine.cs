@@ -26,7 +26,23 @@ public class GameEngine
         if (_mode == GameMode.Server)
             _networking.Start();
 
-        var ipText = _networking.LocalIp.ToString();
+        if (_mode == GameMode.Client)
+        {
+            var ip = RunIpEntryScreen();
+
+            if (WindowShouldClose())
+            {
+                CloseWindow();
+                return;
+            }
+
+            if (ip != null && !_networking.TryConnect(ip))
+            {
+                RunErrorScreen($"Could not connect to {ip}");
+                CloseWindow();
+                return;
+            }
+        }
 
         while (!WindowShouldClose())
         {
@@ -39,12 +55,7 @@ public class GameEngine
             foreach (var component in _components)
                 component.Render();
 
-            if (_mode == GameMode.Server)
-            {
-                int fontSize = 20;
-                int textWidth = MeasureText(ipText, fontSize);
-                DrawText(ipText, GetScreenWidth() - textWidth - 10, 10, fontSize, Color.DarkGray);
-            }
+            DrawStatusText();
 
             EndDrawing();
         }
@@ -53,6 +64,78 @@ public class GameEngine
             _networking.Stop();
 
         CloseWindow();
+    }
+
+    private void DrawStatusText()
+    {
+        string text;
+        Color color;
+
+        if (_mode == GameMode.Server)
+        {
+            text = _networking.LocalIp.ToString();
+            color = Color.DarkGray;
+        }
+        else
+        {
+            text = _networking.IsConnected ? $"Connected to: {_networking.ConnectedIp}" : "Not connected";
+            color = _networking.IsConnected ? Color.Green : Color.DarkGray;
+        }
+
+        int fontSize = 20;
+        int textWidth = MeasureText(text, fontSize);
+        DrawText(text, GetScreenWidth() - textWidth - 10, 10, fontSize, color);
+    }
+
+    private string? RunIpEntryScreen()
+    {
+        var input = new System.Text.StringBuilder();
+
+        while (!WindowShouldClose())
+        {
+            int key;
+            while ((key = GetCharPressed()) != 0)
+            {
+                if (char.IsAsciiDigit((char)key) || key == '.')
+                    input.Append((char)key);
+            }
+
+            if (IsKeyPressed(KeyboardKey.Backspace) && input.Length > 0)
+                input.Remove(input.Length - 1, 1);
+
+            if (IsKeyPressed(KeyboardKey.Enter))
+                return input.Length > 0 ? input.ToString() : null;
+
+            BeginDrawing();
+            ClearBackground(_backgroundColor);
+
+            DrawText("Enter server IP address:", 100, 160, 24, Color.Black);
+            DrawText(input + "_", 100, 195, 24, Color.DarkGray);
+            DrawText("Press Enter to connect, or Enter with empty field to skip", 100, 240, 16, Color.Gray);
+
+            EndDrawing();
+        }
+
+        return null;
+    }
+
+    private void RunErrorScreen(string message)
+    {
+        while (GetKeyPressed() != 0) { } // drain leftover keypresses
+
+        while (!WindowShouldClose())
+        {
+            if (GetKeyPressed() != 0)
+                break;
+
+            BeginDrawing();
+            ClearBackground(_backgroundColor);
+
+            DrawText(message, 100, 160, 24, Color.Red);
+            DrawText("Press any key to exit", 100, 200, 16, Color.DarkGray);
+
+            EndDrawing();
+        }
     }
 }
 

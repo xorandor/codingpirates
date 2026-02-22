@@ -7,7 +7,11 @@ namespace Engine;
 public class Networking
 {
     private readonly TcpListener _listener;
+    private TcpClient? _client;
+
     public IPAddress LocalIp { get; }
+    public string? ConnectedIp { get; private set; }
+    public bool IsConnected => _client?.Connected ?? false;
 
     public Networking()
     {
@@ -31,6 +35,7 @@ public class Networking
         return IPAddress.Loopback;
     }
 
+    // Server mode
     public void Start()
     {
         _listener.Start();
@@ -55,6 +60,30 @@ public class Networking
             {
                 break;
             }
+        }
+    }
+
+    // Client mode
+    public bool TryConnect(string ip)
+    {
+        try
+        {
+            _client = new TcpClient();
+            var task = _client.ConnectAsync(ip, 12345);
+            if (!task.Wait(TimeSpan.FromSeconds(3)))
+            {
+                _client.Close();
+                _client = null;
+                return false;
+            }
+            ConnectedIp = ip;
+            return true;
+        }
+        catch
+        {
+            _client?.Close();
+            _client = null;
+            return false;
         }
     }
 }
