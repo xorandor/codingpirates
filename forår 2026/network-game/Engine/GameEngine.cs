@@ -113,6 +113,9 @@ public class GameEngine
 
     private string? RunIpEntryScreen()
     {
+        //todo
+        return null;
+
         var input = new System.Text.StringBuilder();
 
         while (!WindowShouldClose())
