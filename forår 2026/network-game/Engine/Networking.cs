@@ -88,6 +88,7 @@ public class Networking
 
     private void HandleMessage(string line, TcpClient client)
     {
+        Console.WriteLine($"NETWORK RECEIVED: {line}");
         var parts = line.Split(';');
         switch (parts[0])
         {

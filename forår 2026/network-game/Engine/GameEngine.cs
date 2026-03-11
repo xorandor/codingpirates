@@ -92,7 +92,7 @@ public class GameEngine
             color = _networking.IsConnected ? Color.Green : Color.DarkGray;
         }
 
-        int fontSize = 20;
+        int fontSize = 40;
         int textWidth = MeasureText(text, fontSize);
         DrawText(text, GetScreenWidth() - textWidth - 10, 10, fontSize, color);
     }
@@ -113,9 +113,6 @@ public class GameEngine
 
     private string? RunIpEntryScreen()
     {
-        //todo
-        return null;
-
         var input = new System.Text.StringBuilder();
 
         while (!WindowShouldClose())
