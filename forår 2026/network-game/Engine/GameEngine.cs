@@ -6,6 +6,8 @@ namespace Engine;
 public class GameEngine
 {
     private readonly List<IComponent> _components = [];
+    private readonly List<IComponent> _pendingAdd = [];
+    private readonly List<IComponent> _pendingRemove = [];
     private readonly Color _backgroundColor;
     private readonly GameMode _mode;
     private readonly Networking _networking = new();
@@ -50,12 +52,22 @@ public class GameEngine
             }
         }
 
-        var context = new UpdateContext(_networking, _mode);
+        var context = new UpdateContext(_networking, _mode,
+            add => _pendingAdd.Add(add),
+            remove => _pendingRemove.Add(remove));
 
         while (!WindowShouldClose())
         {
             foreach (var component in _components)
                 component.Update(context);
+
+            foreach (var component in _pendingAdd)
+                _components.Add(component);
+            _pendingAdd.Clear();
+
+            foreach (var component in _pendingRemove)
+                _components.Remove(component);
+            _pendingRemove.Clear();
 
             BeginDrawing();
             ClearBackground(_backgroundColor);
@@ -209,11 +221,19 @@ public class UpdateContext
     public Networking Networking { get; }
     public GameMode Mode { get; }
 
-    public UpdateContext(Networking networking, GameMode mode)
+    private readonly Action<IComponent> _add;
+    private readonly Action<IComponent> _remove;
+
+    public UpdateContext(Networking networking, GameMode mode, Action<IComponent> add, Action<IComponent> remove)
     {
         Networking = networking;
         Mode = mode;
+        _add = add;
+        _remove = remove;
     }
+
+    public void AddComponent(IComponent component) => _add(component);
+    public void RemoveComponent(IComponent component) => _remove(component);
 }
 
 public enum GameMode
@@ -221,4 +241,3 @@ public enum GameMode
     Client,
     Server
 }
-
