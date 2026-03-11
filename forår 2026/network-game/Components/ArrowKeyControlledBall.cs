@@ -12,10 +12,12 @@ public class ArrowKeyControlledBall : IComponent
 
     private readonly float _speed;
     private readonly float _radius;
-    private readonly int _ballId;   // -1 means no networking
-    private readonly bool _isOwn;   // client only: true = controlled by this player
+    private readonly int _ballId;     // -1 means no networking
+    private readonly bool _isOwn;     // client only: true = controlled by this player
+    public string Name { get; }
+    private readonly bool _showName;
 
-    public ArrowKeyControlledBall(Vector2 position, float speed, float radius, Color color, int ballId = -1, bool isOwn = false)
+    public ArrowKeyControlledBall(Vector2 position, float speed, float radius, Color color, int ballId = -1, bool isOwn = false, string name = "", bool showName = false)
     {
         Position = position;
         Color = color;
@@ -23,6 +25,8 @@ public class ArrowKeyControlledBall : IComponent
         _radius = radius;
         _ballId = ballId;
         _isOwn = isOwn;
+        Name = name;
+        _showName = showName;
     }
 
     public void Update(UpdateContext context)
@@ -81,5 +85,16 @@ public class ArrowKeyControlledBall : IComponent
     public void Render()
     {
         DrawCircleV(Position, _radius, Color);
+
+        if (_showName && !string.IsNullOrEmpty(Name))
+        {
+            int fontSize = 14;
+            int textWidth = MeasureText(Name, fontSize);
+            int textX = (int)(Position.X - textWidth / 2);
+            int textY = (int)(Position.Y - fontSize / 2);
+
+            DrawText(Name, textX + 1, textY + 1, fontSize, Color.Black);
+            DrawText(Name, textX, textY, fontSize, Color.White);
+        }
     }
 }

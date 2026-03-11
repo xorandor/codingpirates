@@ -9,14 +9,16 @@ public class NetworkBallManager : IComponent
     private const float Radius = 20;
 
     private readonly float _speed;
+    private readonly bool _showNames;
     private readonly Dictionary<int, ArrowKeyControlledBall> _balls = new();
     private readonly Dictionary<string, int> _playerBallId = new(); // server only
     private int _myBallId = -1;  // client only
     private int _nextBallId = 1; // server only
 
-    public NetworkBallManager(float speed = 300)
+    public NetworkBallManager(float speed = 300, bool showNames = false)
     {
         _speed = speed;
+        _showNames = showNames;
     }
 
     public void Update(UpdateContext context)
@@ -46,10 +48,11 @@ public class NetworkBallManager : IComponent
                 context.Networking.SendMessageToPlayer(playerName, "BALL_JOINED",
                     id.ToString(),
                     ((int)ball.Position.X).ToString(), ((int)ball.Position.Y).ToString(),
-                    ball.Color.R.ToString(), ball.Color.G.ToString(), ball.Color.B.ToString());
+                    ball.Color.R.ToString(), ball.Color.G.ToString(), ball.Color.B.ToString(),
+                    ball.Name);
 
             // Spawn the new ball and register it
-            var newBall = new ArrowKeyControlledBall(position, _speed, Radius, color, ballId);
+            var newBall = new ArrowKeyControlledBall(position, _speed, Radius, color, ballId, name: playerName, showName: _showNames);
             _balls[ballId] = newBall;
             _playerBallId[playerName] = ballId;
             context.AddComponent(newBall);
@@ -59,7 +62,8 @@ public class NetworkBallManager : IComponent
             context.Networking.BroadcastMessageToClients("BALL_JOINED",
                 ballId.ToString(),
                 ((int)position.X).ToString(), ((int)position.Y).ToString(),
-                color.R.ToString(), color.G.ToString(), color.B.ToString());
+                color.R.ToString(), color.G.ToString(), color.B.ToString(),
+                playerName);
         }
 
         var disconnected = context.Networking.TryConsumeMessage("DISCONNECTED", _ => true);
@@ -86,7 +90,7 @@ public class NetworkBallManager : IComponent
         NetworkMessage? ballJoined;
         while ((ballJoined = context.Networking.TryConsumeMessage("BALL_JOINED", _ => true)) != null)
         {
-            if (ballJoined.Fields.Length >= 6
+            if (ballJoined.Fields.Length >= 7
                 && int.TryParse(ballJoined.Fields[0], out int id)
                 && int.TryParse(ballJoined.Fields[1], out int bx)
                 && int.TryParse(ballJoined.Fields[2], out int by)
@@ -94,10 +98,12 @@ public class NetworkBallManager : IComponent
                 && byte.TryParse(ballJoined.Fields[4], out byte g)
                 && byte.TryParse(ballJoined.Fields[5], out byte b))
             {
+                string ballName = ballJoined.Fields[6];
                 var ball = new ArrowKeyControlledBall(
                     new Vector2(bx, by), _speed, Radius,
                     new Color(r, g, b, (byte)255),
-                    ballId: id, isOwn: id == _myBallId);
+                    ballId: id, isOwn: id == _myBallId,
+                    name: ballName, showName: _showNames);
                 _balls[id] = ball;
                 context.AddComponent(ball);
             }
