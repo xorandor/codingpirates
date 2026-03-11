@@ -49,7 +49,7 @@ public class GameEngine
             }
         }
 
-        var context = new UpdateContext(_networking);
+        var context = new UpdateContext(_networking, _mode);
 
         while (!WindowShouldClose())
         {
@@ -206,10 +206,12 @@ public interface IComponent
 public class UpdateContext
 {
     public Networking Networking { get; }
+    public GameMode Mode { get; }
 
-    public UpdateContext(Networking networking)
+    public UpdateContext(Networking networking, GameMode mode)
     {
         Networking = networking;
+        Mode = mode;
     }
 }
 

@@ -103,6 +103,28 @@ public class Networking
         }
     }
 
+    private void BroadcastToClients(string message)
+    {
+        var bytes = Encoding.UTF8.GetBytes(message);
+        foreach (var tcpClient in _players.Keys)
+        {
+            try
+            {
+                if (tcpClient.Connected)
+                    tcpClient.GetStream().Write(bytes);
+            }
+            catch { }
+        }
+    }
+
+    public void BroadcastMessageToClients(string messageType, params string[] parameters)
+    {
+        var message = parameters.Length > 0
+            ? $"{messageType};{string.Join(';', parameters)}\n"
+            : $"{messageType}\n";
+        BroadcastToClients(message);
+    }
+
     // Client mode
     public bool TryConnect(string ip)
     {
@@ -146,10 +168,13 @@ public class Networking
         }
     }
 
-    public void SendBoxMove(int boxId, Vector2 position)
+    public void SendMessageToServer(string messageType, params string[] parameters)
     {
         if (_client == null || !_client.Connected) return;
-        var bytes = Encoding.UTF8.GetBytes($"BOXMOVE;{boxId};{(int)position.X};{(int)position.Y}\n");
+        var message = parameters.Length > 0
+            ? $"{messageType};{string.Join(';', parameters)}\n"
+            : $"{messageType}\n";
+        var bytes = Encoding.UTF8.GetBytes(message);
         _client.GetStream().Write(bytes);
     }
 }
