@@ -46,6 +46,7 @@ public class GameEngine
                 if (WindowShouldClose()) { CloseWindow(); return; }
 
                 _networking.SendJoined(name);
+                _networking.StartListening();
             }
         }
 

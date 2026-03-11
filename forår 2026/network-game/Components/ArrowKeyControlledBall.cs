@@ -7,60 +7,20 @@ namespace Components;
 
 public class ArrowKeyControlledBall : IComponent
 {
-    private Vector2 _position;
+    public Vector2 Position { get; set; }
     private readonly float _speed;
     private readonly float _radius;
-    private readonly Color _color;
-    private readonly int? _networkBoxId;
+    public Color Color { get; }
 
-    public ArrowKeyControlledBall(Vector2 position, float speed, float radius, Color color, int? networkBoxId = null)
+    public ArrowKeyControlledBall(Vector2 position, float speed, float radius, Color color)
     {
-        _position = position;
+        Position = position;
         _speed = speed;
         _radius = radius;
-        _color = color;
-        _networkBoxId = networkBoxId;
+        Color = color;
     }
 
     public void Update(UpdateContext context)
-    {
-        if (!_networkBoxId.HasValue) { UpdateLocal(); return; }
-
-        if (context.Mode == GameMode.Server)
-        {
-            var msg = context.Networking.TryConsumeMessage("BOXMOVE",
-                m => m.Fields.Length >= 3 && m.Fields[0] == _networkBoxId.Value.ToString());
-
-            if (msg != null && int.TryParse(msg.Fields[1], out int x) && int.TryParse(msg.Fields[2], out int y))
-            {
-                _position = new Vector2(x, y);
-                context.Networking.BroadcastMessageToClients("BOXMOVE_SERVER", msg.Fields);
-            }
-        }
-        else
-        {
-            Vector2 direction = Vector2.Zero;
-            if (IsKeyDown(KeyboardKey.Right)) direction.X += 1;
-            if (IsKeyDown(KeyboardKey.Left))  direction.X -= 1;
-            if (IsKeyDown(KeyboardKey.Down))  direction.Y += 1;
-            if (IsKeyDown(KeyboardKey.Up))    direction.Y -= 1;
-
-            if (direction != Vector2.Zero)
-            {
-                direction = Vector2.Normalize(direction);
-                _position += direction * _speed * GetFrameTime();
-                context.Networking.SendMessageToServer("BOXMOVE", _networkBoxId.Value.ToString(), ((int)_position.X).ToString(), ((int)_position.Y).ToString());
-            }
-
-            var serverUpdate = context.Networking.TryConsumeMessage("BOXMOVE_SERVER",
-                m => m.Fields.Length >= 3 && m.Fields[0] == _networkBoxId.Value.ToString());
-
-            if (serverUpdate != null && int.TryParse(serverUpdate.Fields[1], out int sx) && int.TryParse(serverUpdate.Fields[2], out int sy))
-                _position = new Vector2(sx, sy);
-        }
-    }
-
-    private void UpdateLocal()
     {
         Vector2 direction = Vector2.Zero;
 
@@ -72,12 +32,12 @@ public class ArrowKeyControlledBall : IComponent
         if (direction != Vector2.Zero)
         {
             direction = Vector2.Normalize(direction);
-            _position += direction * _speed * GetFrameTime();
+            Position += direction * _speed * GetFrameTime();
         }
     }
 
     public void Render()
     {
-        DrawCircleV(_position, _radius, _color);
+        DrawCircleV(Position, _radius, Color);
     }
 }

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Numerics;
 using System.Text;
 
 namespace Engine;
@@ -76,30 +75,55 @@ public class Networking
             using var reader = new StreamReader(client.GetStream(), Encoding.UTF8, leaveOpen: true);
             string? line;
             while ((line = await reader.ReadLineAsync()) != null)
-                HandleMessage(line, client);
+                HandleMessageFromClient(line, client);
         }
         catch { }
         finally
         {
-            _players.TryRemove(client, out _);
+            if (_players.TryRemove(client, out string? playerName))
+            {
+                lock (_messageQueueLock)
+                    _messageQueue.Add(new NetworkMessage("DISCONNECTED", [playerName]));
+            }
             client.Close();
         }
     }
 
-    private void HandleMessage(string line, TcpClient client)
+    private void HandleMessageFromClient(string line, TcpClient client)
     {
         Console.WriteLine($"NETWORK RECEIVED: {line}");
         var parts = line.Split(';');
-        switch (parts[0])
+
+        if (parts[0] == "JOINED" && parts.Length >= 2)
+            _players[client] = parts[1];
+
+        lock (_messageQueueLock)
+            _messageQueue.Add(new NetworkMessage(parts[0], parts[1..]));
+    }
+
+    private void SendToClient(TcpClient client, string message)
+    {
+        try
         {
-            case "JOINED":
-                if (parts.Length >= 2)
-                    _players[client] = parts[1];
-                break;
-            default:
-                lock (_messageQueueLock)
-                    _messageQueue.Add(new NetworkMessage(parts[0], parts[1..]));
-                break;
+            if (client.Connected)
+                client.GetStream().Write(Encoding.UTF8.GetBytes(message));
+        }
+        catch { }
+    }
+
+    public void SendMessageToPlayer(string playerName, string messageType, params string[] parameters)
+    {
+        var message = parameters.Length > 0
+            ? $"{messageType};{string.Join(';', parameters)}\n"
+            : $"{messageType}\n";
+
+        foreach (var (client, name) in _players)
+        {
+            if (name == playerName)
+            {
+                SendToClient(client, message);
+                return;
+            }
         }
     }
 
@@ -154,6 +178,28 @@ public class Networking
         if (_client == null || !_client.Connected) return;
         var bytes = Encoding.UTF8.GetBytes($"JOINED;{playerName}\n");
         _client.GetStream().Write(bytes);
+    }
+
+    public void StartListening()
+    {
+        if (_client == null || !_client.Connected) return;
+        _ = Task.Run(ListenFromServerAsync);
+    }
+
+    private async Task ListenFromServerAsync()
+    {
+        try
+        {
+            using var reader = new StreamReader(_client!.GetStream(), Encoding.UTF8, leaveOpen: true);
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                var parts = line.Split(';');
+                lock (_messageQueueLock)
+                    _messageQueue.Add(new NetworkMessage(parts[0], parts[1..]));
+            }
+        }
+        catch { }
     }
 
     public NetworkMessage? TryConsumeMessage(string command, Func<NetworkMessage, bool> match)
