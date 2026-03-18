@@ -56,3 +56,4 @@ nunit-*.xml
 
 #visual Studio
 .vs
+/forår 2026/network-game/.idea
