@@ -16,7 +16,8 @@ public class ArrowKeyControlledBall : IComponent
     private readonly bool _isOwn;     // client only: true = controlled by this player
     public string Name { get; }
     private readonly bool _showName;
-
+    private bool _movedThisFrame;
+        
     public ArrowKeyControlledBall(Vector2 position, float speed, float radius, Color color, int ballId = -1, bool isOwn = false, string name = "", bool showName = false)
     {
         Position = position;
@@ -51,10 +52,16 @@ public class ArrowKeyControlledBall : IComponent
         else if (_isOwn)
         {
             MoveWithArrowKeys();
-            context.Networking.SendMessageToServer("BOXMOVE",
-                _ballId.ToString(),
-                ((int)Position.X).ToString(),
-                ((int)Position.Y).ToString());
+
+            if (_movedThisFrame)
+            {
+                context.Networking.SendMessageToServer("BOXMOVE",
+                    _ballId.ToString(),
+                    ((int)Position.X).ToString(),
+                    ((int)Position.Y).ToString());
+                
+                _movedThisFrame = false;
+            }
         }
         else
         {
@@ -79,6 +86,7 @@ public class ArrowKeyControlledBall : IComponent
         {
             direction = Vector2.Normalize(direction);
             Position += direction * _speed * GetFrameTime();
+            _movedThisFrame = true;
         }
     }
 
