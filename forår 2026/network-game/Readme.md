@@ -1,3 +1,6 @@
+Når du henter koden, mangler bevist filen `program.cs`. Denne fil skal du selv tilføje. Her er et eksempel på denne fil:
+
+```csharp
 using Components;
 using Engine;
 using Raylib_cs;
@@ -17,3 +20,4 @@ game.Add(new FloatingText("Så er vi i gang!", 120, 200));
 game.Add(new NetworkBallManager(speed: 300, showNames: true));
 
 game.Run();
+```
