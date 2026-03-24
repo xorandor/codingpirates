@@ -50,11 +50,14 @@ public class ArrowKeyControlledBall : IComponent
         }
         else if (_isOwn)
         {
-            MoveWithArrowKeys();
-            context.Networking.SendMessageToServer("BOXMOVE",
-                _ballId.ToString(),
-                ((int)Position.X).ToString(),
-                ((int)Position.Y).ToString());
+            if (MoveWithArrowKeys())
+            {
+                context.Networking.SendMessageToServer("BOXMOVE",
+                                _ballId.ToString(),
+                                ((int)Position.X).ToString(),
+                                ((int)Position.Y).ToString());
+            }
+
         }
         else
         {
@@ -66,20 +69,23 @@ public class ArrowKeyControlledBall : IComponent
         }
     }
 
-    private void MoveWithArrowKeys()
+    private bool MoveWithArrowKeys()
     {
         Vector2 direction = Vector2.Zero;
 
         if (IsKeyDown(KeyboardKey.Right)) direction.X += 1;
-        if (IsKeyDown(KeyboardKey.Left))  direction.X -= 1;
-        if (IsKeyDown(KeyboardKey.Down))  direction.Y += 1;
-        if (IsKeyDown(KeyboardKey.Up))    direction.Y -= 1;
+        if (IsKeyDown(KeyboardKey.Left)) direction.X -= 1;
+        if (IsKeyDown(KeyboardKey.Down)) direction.Y += 1;
+        if (IsKeyDown(KeyboardKey.Up)) direction.Y -= 1;
 
         if (direction != Vector2.Zero)
         {
             direction = Vector2.Normalize(direction);
             Position += direction * _speed * GetFrameTime();
+            return true;
         }
+
+        return false;
     }
 
     public void Render()
