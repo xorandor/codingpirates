@@ -54,7 +54,7 @@ public class CircleShooter : IComponent
     private class Bullet : IComponent
     {
         private Vector2 _position;
-        private readonly Vector2 _direction;
+        private Vector2 _direction;
         private readonly float _speed;
         private readonly float _radius;
         private readonly Color _color;
@@ -72,11 +72,17 @@ public class CircleShooter : IComponent
         {
             _position += _direction * _speed * GetFrameTime();
 
-            bool outOfBounds = _position.X < -50 || _position.X > GetScreenWidth() + 50
-                            || _position.Y < -50 || _position.Y > GetScreenHeight() + 50;
+            if (_position.X - _radius < 0 || _position.X + _radius > GetScreenWidth())
+            {
+                _direction.X = -_direction.X;
+                _position.X = Math.Clamp(_position.X, _radius, GetScreenWidth() - _radius);
+            }
 
-            if (outOfBounds)
-                context.RemoveComponent(this);
+            if (_position.Y - _radius < 0 || _position.Y + _radius > GetScreenHeight())
+            {
+                _direction.Y = -_direction.Y;
+                _position.Y = Math.Clamp(_position.Y, _radius, GetScreenHeight() - _radius);
+            }
         }
 
         public void Render()
