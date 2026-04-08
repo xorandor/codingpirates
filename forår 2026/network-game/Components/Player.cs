@@ -11,14 +11,17 @@ public class Player : IComponent
     private readonly float _speed;
     private readonly float _radius;
     private readonly Color _color;
+    private readonly Vector2 _startPosition;
     private bool _alive = true;
     private bool _moving;
     private float _walkTimer;
     private bool _facingRight = true;
+    private readonly List<Coin> _collectedCoins = [];
 
     public Player(Vector2 position, float speed, float radius, Color color)
     {
         _position = position;
+        _startPosition = position;
         _speed = speed;
         _radius = radius;
         _color = color;
@@ -29,7 +32,20 @@ public class Player : IComponent
         if (!_alive)
         {
             if (IsKeyPressed(KeyboardKey.Enter))
+            {
                 _alive = true;
+                _position = _startPosition;
+
+                // Nulstil score
+                var score = context.GetComponents<Score>().FirstOrDefault();
+                if (score != null)
+                    score.Points = 0;
+
+                // Respawn alle opsamlede coins
+                foreach (var coin in _collectedCoins)
+                    context.AddComponent(coin);
+                _collectedCoins.Clear();
+            }
             return;
         }
 
@@ -50,6 +66,20 @@ public class Player : IComponent
             _walkTimer += GetFrameTime() * 8f;
             if (direction.X > 0) _facingRight = true;
             else if (direction.X < 0) _facingRight = false;
+        }
+
+        // Saml coins op
+        foreach (var coin in context.GetComponents<Coin>())
+        {
+            float distance = Vector2.Distance(_position, coin.Position);
+            if (distance < _radius + coin.Radius)
+            {
+                context.RemoveComponent(coin);
+                _collectedCoins.Add(coin);
+                var score = context.GetComponents<Score>().FirstOrDefault();
+                if (score != null)
+                    score.Points++;
+            }
         }
 
         // Tjek kollision med alle kugler fra CircleShooter
