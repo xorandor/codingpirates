@@ -1,5 +1,6 @@
 using Raylib_cs;
 using static Raylib_cs.Raylib;
+using System.Numerics;
 
 namespace Engine;
 
@@ -54,7 +55,8 @@ public class GameEngine
 
         var context = new UpdateContext(_networking, _mode,
             add => _pendingAdd.Add(add),
-            remove => _pendingRemove.Add(remove));
+            remove => _pendingRemove.Add(remove),
+            () => _components);
 
         while (!WindowShouldClose())
         {
@@ -223,17 +225,20 @@ public class UpdateContext
 
     private readonly Action<IComponent> _add;
     private readonly Action<IComponent> _remove;
+    private readonly Func<IEnumerable<IComponent>> _getComponents;
 
-    public UpdateContext(Networking networking, GameMode mode, Action<IComponent> add, Action<IComponent> remove)
+    public UpdateContext(Networking networking, GameMode mode, Action<IComponent> add, Action<IComponent> remove, Func<IEnumerable<IComponent>> getComponents)
     {
         Networking = networking;
         Mode = mode;
         _add = add;
         _remove = remove;
+        _getComponents = getComponents;
     }
 
     public void AddComponent(IComponent component) => _add(component);
     public void RemoveComponent(IComponent component) => _remove(component);
+    public IEnumerable<T> GetComponents<T>() => _getComponents().OfType<T>();
 }
 
 public enum GameMode

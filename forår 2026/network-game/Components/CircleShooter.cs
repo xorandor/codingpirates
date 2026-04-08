@@ -69,13 +69,16 @@ public class CircleShooter : IComponent
         DrawLineEx(stickStart, stickEnd, 3f, _color);
     }
 
-    private class Bullet : IComponent
+    public class Bullet : IComponent
     {
         private Vector2 _position;
         private Vector2 _direction;
         private readonly float _speed;
         private readonly float _radius;
         private readonly Color _color;
+
+        public Vector2 Position => _position;
+        public float Radius => _radius;
 
         public Bullet(Vector2 position, Vector2 direction, float speed, float radius, Color color)
         {
