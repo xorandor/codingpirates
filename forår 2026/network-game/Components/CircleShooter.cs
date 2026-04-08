@@ -16,12 +16,15 @@ public class CircleShooter : IComponent
     private readonly float _bulletRadius;
     private readonly KeyboardKey? _shootKey;
     private readonly MouseButton? _shootButton;
+    private readonly float? _autoShootInterval;
 
     private float _angle; // current angle in radians
+    private float _autoShootTimer;
 
     public CircleShooter(Vector2 position, float radius, float stickLength, Color color,
         float rotationSpeed = 3f, float bulletSpeed = 400f, float bulletRadius = 5f,
-        KeyboardKey? shootKey = null, MouseButton? shootButton = null)
+        KeyboardKey? shootKey = null, MouseButton? shootButton = null,
+        float? autoShootIntervalMs = null)
     {
         _position = position;
         _radius = radius;
@@ -32,18 +35,28 @@ public class CircleShooter : IComponent
         _bulletRadius = bulletRadius;
         _shootKey = shootKey;
         _shootButton = shootButton;
+        _autoShootInterval = autoShootIntervalMs / 1000f;
 
-        // Hvis hverken tast eller museknap er valgt, bruges Space som standard
-        if (_shootKey == null && _shootButton == null)
+        // Hvis hverken tast, museknap eller autoskyd er valgt, bruges Space som standard
+        if (_shootKey == null && _shootButton == null && _autoShootInterval == null)
             _shootKey = KeyboardKey.Space;
     }
 
-    private bool IsShootPressed()
+    private bool ShouldShoot()
     {
         if (_shootKey != null && IsKeyPressed(_shootKey.Value))
             return true;
         if (_shootButton != null && IsMouseButtonPressed(_shootButton.Value))
             return true;
+        if (_autoShootInterval != null)
+        {
+            _autoShootTimer += GetFrameTime();
+            if (_autoShootTimer >= _autoShootInterval.Value)
+            {
+                _autoShootTimer -= _autoShootInterval.Value;
+                return true;
+            }
+        }
         return false;
     }
 
@@ -51,7 +64,7 @@ public class CircleShooter : IComponent
     {
         _angle += _rotationSpeed * GetFrameTime();
 
-        if (IsShootPressed())
+        if (ShouldShoot())
         {
             Vector2 direction = new((float)Math.Cos(_angle), (float)Math.Sin(_angle));
             Vector2 spawnPosition = _position + direction * (_radius + _stickLength);
