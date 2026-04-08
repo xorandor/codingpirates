@@ -14,11 +14,14 @@ public class CircleShooter : IComponent
     private readonly float _rotationSpeed; // radians per second
     private readonly float _bulletSpeed;
     private readonly float _bulletRadius;
+    private readonly KeyboardKey? _shootKey;
+    private readonly MouseButton? _shootButton;
 
     private float _angle; // current angle in radians
 
     public CircleShooter(Vector2 position, float radius, float stickLength, Color color,
-        float rotationSpeed = 3f, float bulletSpeed = 400f, float bulletRadius = 5f)
+        float rotationSpeed = 3f, float bulletSpeed = 400f, float bulletRadius = 5f,
+        KeyboardKey? shootKey = null, MouseButton? shootButton = null)
     {
         _position = position;
         _radius = radius;
@@ -27,13 +30,28 @@ public class CircleShooter : IComponent
         _rotationSpeed = rotationSpeed;
         _bulletSpeed = bulletSpeed;
         _bulletRadius = bulletRadius;
+        _shootKey = shootKey;
+        _shootButton = shootButton;
+
+        // Hvis hverken tast eller museknap er valgt, bruges Space som standard
+        if (_shootKey == null && _shootButton == null)
+            _shootKey = KeyboardKey.Space;
+    }
+
+    private bool IsShootPressed()
+    {
+        if (_shootKey != null && IsKeyPressed(_shootKey.Value))
+            return true;
+        if (_shootButton != null && IsMouseButtonPressed(_shootButton.Value))
+            return true;
+        return false;
     }
 
     public void Update(UpdateContext context)
     {
         _angle += _rotationSpeed * GetFrameTime();
 
-        if (IsKeyPressed(KeyboardKey.Space))
+        if (IsShootPressed())
         {
             Vector2 direction = new((float)Math.Cos(_angle), (float)Math.Sin(_angle));
             Vector2 spawnPosition = _position + direction * (_radius + _stickLength);
