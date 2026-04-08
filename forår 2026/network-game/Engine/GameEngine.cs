@@ -78,6 +78,7 @@ public class GameEngine
                 component.Render();
 
             DrawStatusText();
+            DrawFPS(10, 10);
 
             if (_mode == GameMode.Server)
                 DrawPlayerList();
