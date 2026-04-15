@@ -8,7 +8,6 @@ namespace Components;
 public class Player : IComponent
 {
     private Vector2 _position;
-    private readonly float _speed;
     private readonly float _radius;
     private readonly Color _color;
     private readonly Vector2 _startPosition;
@@ -18,13 +17,15 @@ public class Player : IComponent
     private bool _facingRight = true;
     private readonly List<Coin> _collectedCoins = [];
 
+    public float Speed { get; set; }
+
     public event EventHandler OnCoinCollected;
 
     public Player(Vector2 position, float speed, float radius, Color color)
     {
         _position = position;
         _startPosition = position;
-        _speed = speed;
+        Speed = speed;
         _radius = radius;
         _color = color;
     }
@@ -64,7 +65,7 @@ public class Player : IComponent
         if (_moving)
         {
             direction = Vector2.Normalize(direction);
-            _position += direction * _speed * GetFrameTime();
+            _position += direction * Speed * GetFrameTime();
             _walkTimer += GetFrameTime() * 8f;
             if (direction.X > 0) _facingRight = true;
             else if (direction.X < 0) _facingRight = false;
