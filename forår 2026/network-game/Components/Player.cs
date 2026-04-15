@@ -18,6 +18,8 @@ public class Player : IComponent
     private bool _facingRight = true;
     private readonly List<Coin> _collectedCoins = [];
 
+    public event EventHandler OnCoinCollected;
+
     public Player(Vector2 position, float speed, float radius, Color color)
     {
         _position = position;
@@ -76,9 +78,10 @@ public class Player : IComponent
             {
                 context.RemoveComponent(coin);
                 _collectedCoins.Add(coin);
-                var score = context.GetComponents<Score>().FirstOrDefault();
-                if (score != null)
-                    score.Points++;
+                if(OnCoinCollected != null)
+                {
+                    OnCoinCollected(this, EventArgs.Empty);
+                }
             }
         }
 
