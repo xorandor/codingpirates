@@ -21,7 +21,7 @@ public class GameEngine
 
     public void Add(IComponent component)
     {
-        _components.Add(component);
+        _pendingAdd.Add(component);
     }
 
     public void Run()
