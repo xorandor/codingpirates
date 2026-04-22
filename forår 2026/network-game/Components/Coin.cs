@@ -9,15 +9,19 @@ public class Coin : IComponent
 {
     private readonly Vector2 _position;
     private readonly float _radius;
+    private readonly Color innerColor;
+    private readonly Color outerColor;
     private float _animTimer;
 
     public Vector2 Position => _position;
     public float Radius => _radius;
 
-    public Coin(Vector2 position, float radius = 10f)
+    public Coin(Vector2 position, float radius = 10f, Color? innerColor = null, Color? outerColor = null)
     {
         _position = position;
         _radius = radius;
+        this.innerColor = innerColor ?? Color.Yellow;
+        this.outerColor = outerColor ?? Color.Gold;
     }
 
     public void Update(UpdateContext context)
@@ -34,8 +38,8 @@ public class Coin : IComponent
         // Ydre glow
         DrawCircleV(_position, glowRadius + 2f, new Color(255, 220, 50, 80));
         // Mønt
-        DrawCircleV(_position, glowRadius, Color.Gold);
+        DrawCircleV(_position, glowRadius, outerColor);
         // Indre highlight
-        DrawCircleV(_position + new Vector2(-_radius * 0.2f, -_radius * 0.2f), glowRadius * 0.4f, Color.Yellow);
+        DrawCircleV(_position + new Vector2(-_radius * 0.2f, -_radius * 0.2f), glowRadius * 0.4f, innerColor);
     }
 }
