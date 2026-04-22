@@ -22,7 +22,7 @@ public class CircleShooter : IComponent
     private float _angle; // current angle in radians
     private float _autoShootTimer;
 
-    public CircleShooter(Vector2 position, float radius, float stickLength, Color color,
+    public CircleShooter(Vector2 position, float radius = 10, float stickLength = 30, Color? color = null,
         float rotationSpeed = 3f, float bulletSpeed = 400f, float bulletRadius = 5f,
         KeyboardKey? shootKey = null, MouseButton? shootButton = null,
         float? autoShootIntervalMs = null, int maxBounces = 0)
@@ -30,7 +30,7 @@ public class CircleShooter : IComponent
         _position = position;
         _radius = radius;
         _stickLength = stickLength;
-        _color = color;
+        _color = color ?? Color.Black;
         _rotationSpeed = rotationSpeed;
         _bulletSpeed = bulletSpeed;
         _bulletRadius = bulletRadius;
