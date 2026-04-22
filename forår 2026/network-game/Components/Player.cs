@@ -15,7 +15,6 @@ public class Player : IComponent
     private bool _moving;
     private float _walkTimer;
     private bool _facingRight = true;
-    private readonly List<Coin> _collectedCoins = [];
 
     public float Speed { get; set; }
 
@@ -43,11 +42,6 @@ public class Player : IComponent
                 var score = context.GetComponents<Score>().FirstOrDefault();
                 if (score != null)
                     score.Points = 0;
-
-                // Respawn alle opsamlede coins
-                foreach (var coin in _collectedCoins)
-                    context.AddComponent(coin);
-                _collectedCoins.Clear();
             }
             return;
         }
@@ -78,7 +72,6 @@ public class Player : IComponent
             if (distance < _radius + coin.Radius)
             {
                 context.RemoveComponent(coin);
-                _collectedCoins.Add(coin);
                 if(OnCoinCollected != null)
                 {
                     OnCoinCollected(this, EventArgs.Empty);
