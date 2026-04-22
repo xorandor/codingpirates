@@ -15,9 +15,11 @@ public class Player : IComponent
     private bool _moving;
     private float _walkTimer;
     private bool _facingRight = true;
+    private bool _gameStarted;
 
     public float Speed { get; set; }
 
+    public event EventHandler OnGameStarted;
     public event EventHandler OnCoinCollected;
 
     public Player(Vector2 position, float speed, float radius, Color color)
@@ -31,12 +33,26 @@ public class Player : IComponent
 
     public void Update(UpdateContext context)
     {
+        if (!_gameStarted)
+        {
+            _gameStarted = true;
+            if (OnGameStarted != null)
+            {
+                OnGameStarted(this, EventArgs.Empty);
+            }
+        }
+
         if (!_alive)
         {
             if (IsKeyPressed(KeyboardKey.Enter))
             {
                 _alive = true;
                 _position = _startPosition;
+
+                if (OnGameStarted != null)
+                {
+                    OnGameStarted(this, EventArgs.Empty);
+                }
 
                 // Nulstil score
                 var score = context.GetComponents<Score>().FirstOrDefault();

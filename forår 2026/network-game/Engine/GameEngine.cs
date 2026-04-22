@@ -13,6 +13,8 @@ public class GameEngine
     private readonly GameMode _mode;
     private readonly Networking _networking = new();
 
+    public IEnumerable<IComponent> Components => _components.Except(_pendingRemove);
+
     public GameEngine(Color backgroundColor, GameMode mode)
     {
         _backgroundColor = backgroundColor;
@@ -22,6 +24,11 @@ public class GameEngine
     public void Add(IComponent component)
     {
         _pendingAdd.Add(component);
+    }
+
+    public void Remove(IComponent component)
+    {
+        _pendingRemove.Add(component);
     }
 
     public void Run()
