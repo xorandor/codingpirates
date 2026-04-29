@@ -15,6 +15,8 @@ public class Coin : IComponent
 
     public Vector2 Position => _position;
     public float Radius => _radius;
+    public Color InnerColor => innerColor;
+    public Color OuterColor => outerColor;
 
     public Coin(Vector2 position, float radius = 10f, Color? innerColor = null, Color? outerColor = null)
     {

@@ -20,7 +20,7 @@ public class Player : IComponent
     public float Speed { get; set; }
 
     public event EventHandler OnGameStarted;
-    public event EventHandler OnCoinCollected;
+    public event EventHandler<Coin> OnCoinCollected;
 
     public Player(Vector2 position, float speed, float radius, Color color)
     {
@@ -90,7 +90,7 @@ public class Player : IComponent
                 context.RemoveComponent(coin);
                 if(OnCoinCollected != null)
                 {
-                    OnCoinCollected(this, EventArgs.Empty);
+                    OnCoinCollected(this, coin);
                 }
             }
         }
