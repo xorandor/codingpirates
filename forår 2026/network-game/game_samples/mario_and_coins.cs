@@ -53,7 +53,7 @@ player.OnCoinCollected += (se, ea) =>
 {
     score.Points++;
     Console.WriteLine(game.Components.OfType<Coin>().Count());
-    if (coinCounter.Count == 0)
+    if (game.Components.OfType<Coin>().Count() == 0)
     {
         for (int i = 0; i < 3; i++)
         {
