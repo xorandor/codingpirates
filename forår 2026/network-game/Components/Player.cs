@@ -21,6 +21,7 @@ public class Player : IComponent
 
     public event EventHandler OnGameStarted;
     public event EventHandler<Coin> OnCoinCollected;
+    public event EventHandler OnPlayerDied;
 
     public Player(Vector2 position, float speed, float radius, Color color)
     {
@@ -102,6 +103,10 @@ public class Player : IComponent
             if (distance < _radius + bullet.Radius)
             {
                 _alive = false;
+                if (OnPlayerDied != null)
+                {
+                    OnPlayerDied(this, EventArgs.Empty);
+                }
                 break;
             }
         }
