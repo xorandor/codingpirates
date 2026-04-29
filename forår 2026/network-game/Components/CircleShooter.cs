@@ -21,6 +21,7 @@ public class CircleShooter : IComponent
 
     private float _angle; // current angle in radians
     private float _autoShootTimer;
+    private readonly List<Bullet> _bullets = [];
 
     public CircleShooter(Vector2 position, float radius = 10, float stickLength = 30, Color? color = null,
         float rotationSpeed = 3f, float bulletSpeed = 400f, float bulletRadius = 5f,
@@ -70,8 +71,17 @@ public class CircleShooter : IComponent
         {
             Vector2 direction = new((float)Math.Cos(_angle), (float)Math.Sin(_angle));
             Vector2 spawnPosition = _position + direction * (_radius + _stickLength);
-            context.AddComponent(new Bullet(spawnPosition, direction, _bulletSpeed, _bulletRadius, _color, _maxBounces));
+            var bullet = new Bullet(spawnPosition, direction, _bulletSpeed, _bulletRadius, _color, _maxBounces);
+            _bullets.Add(bullet);
+            context.AddComponent(bullet);
         }
+    }
+
+    public void OnRemoved(UpdateContext context)
+    {
+        foreach (var bullet in _bullets)
+            context.RemoveComponent(bullet);
+        _bullets.Clear();
     }
 
     public void Render()

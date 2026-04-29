@@ -9,11 +9,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="game_samples\mario_and_coins.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="7.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Components\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="game_samples\mario_and_coins.cs" />
   </ItemGroup>
 
 </Project>

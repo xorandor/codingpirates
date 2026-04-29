@@ -21,9 +21,10 @@ public class GameEngine
         _mode = mode;
     }
 
-    public void Add(IComponent component)
+    public T Add<T>(T component) where T : IComponent
     {
         _pendingAdd.Add(component);
+        return component;
     }
 
     public void Remove(IComponent component)
@@ -74,9 +75,13 @@ public class GameEngine
                 _components.Add(component);
             _pendingAdd.Clear();
 
-            foreach (var component in _pendingRemove)
-                _components.Remove(component);
+            var removing = _pendingRemove.ToList();
             _pendingRemove.Clear();
+            foreach (var component in removing)
+            {
+                component.OnRemoved(context);
+                _components.Remove(component);
+            }
 
             BeginDrawing();
             ClearBackground(_backgroundColor);
@@ -224,6 +229,7 @@ public interface IComponent
 {
     void Update(UpdateContext context);
     void Render();
+    void OnRemoved(UpdateContext context) { }
 }
 
 public class UpdateContext

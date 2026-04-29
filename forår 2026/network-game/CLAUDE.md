@@ -22,6 +22,7 @@ The project can be run immediately by executing the command `dotnet run`` inside
 # Conventions & Preferences
 - When working with positioning, always use vectors (Vector2 from raylib). When working with directions, always use vectors with length 1. If distance/speed is required, is must be a seperate float value.
 - In general always use raylib method overloads that accepts vector arguments instead of float values for x and y components
+- Always ignore files in the folder game_samples.
 
 # Network protocol
 The game relies on a networking protocol. It a simple text based protocol, where every message over the network must adher to the following rules:
