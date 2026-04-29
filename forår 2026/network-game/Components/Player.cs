@@ -18,18 +18,20 @@ public class Player : IComponent
     private bool _gameStarted;
 
     public float Speed { get; set; }
+    public bool ConstrainToScreen { get; set; }
 
     public event EventHandler OnGameStarted;
     public event EventHandler<Coin> OnCoinCollected;
     public event EventHandler OnPlayerDied;
 
-    public Player(Vector2 position, float speed, float radius, Color color)
+    public Player(Vector2 position, float speed, float radius, Color color, bool constrainToScreen = false)
     {
         _position = position;
         _startPosition = position;
         Speed = speed;
         _radius = radius;
         _color = color;
+        ConstrainToScreen = constrainToScreen;
     }
 
     public void Update(UpdateContext context)
@@ -80,6 +82,12 @@ public class Player : IComponent
             _walkTimer += GetFrameTime() * 8f;
             if (direction.X > 0) _facingRight = true;
             else if (direction.X < 0) _facingRight = false;
+
+            if (ConstrainToScreen)
+            {
+                _position.X = Math.Clamp(_position.X, _radius, GetScreenWidth() - _radius);
+                _position.Y = Math.Clamp(_position.Y, _radius, GetScreenHeight() - _radius);
+            }
         }
 
         // Saml coins op
