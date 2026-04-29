@@ -12,12 +12,14 @@ public class ManualScoreCounter : IComponent
     private readonly Color _color;
 
     public int Score { get; set; }
+    public string Label { get; set; }
 
-    public ManualScoreCounter(Vector2 position, int fontSize = 30, Color? color = null)
+    public ManualScoreCounter(Vector2 position, int fontSize = 30, Color? color = null, string label = "Score")
     {
         _position = position;
         _fontSize = fontSize;
         _color = color ?? Color.Black;
+        Label = label;
     }
 
     public void Update(UpdateContext context)
@@ -26,6 +28,6 @@ public class ManualScoreCounter : IComponent
 
     public void Render()
     {
-        DrawText($"Score: {Score}", (int)_position.X, (int)_position.Y, _fontSize, _color);
+        DrawText($"{Label}: {Score}", (int)_position.X, (int)_position.Y, _fontSize, _color);
     }
 }
