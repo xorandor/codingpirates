@@ -38,6 +38,14 @@ public class GameEngine
             _pendingRemove.Add(component);
     }
 
+    public void RemoveAll()
+    {
+        foreach (var component in _components)
+        {
+            _pendingRemove.Add(component);
+        }
+    }
+
     public void Run()
     {
         if (_mode == GameMode.Server)
