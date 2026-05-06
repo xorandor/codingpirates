@@ -32,6 +32,12 @@ public class GameEngine
         _pendingRemove.Add(component);
     }
 
+    public void RemoveAll<T>() where T : IComponent
+    {
+        foreach (var component in _components.OfType<T>())
+            _pendingRemove.Add(component);
+    }
+
     public void Run()
     {
         if (_mode == GameMode.Server)
@@ -252,6 +258,11 @@ public class UpdateContext
 
     public void AddComponent(IComponent component) => _add(component);
     public void RemoveComponent(IComponent component) => _remove(component);
+    public void RemoveAllComponents<T>() where T : IComponent
+    {
+        foreach (var component in _getComponents().OfType<T>())
+            _remove(component);
+    }
     public IEnumerable<T> GetComponents<T>() => _getComponents().OfType<T>();
 }
 
