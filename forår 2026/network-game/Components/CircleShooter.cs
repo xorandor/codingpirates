@@ -22,6 +22,7 @@ public class CircleShooter : IComponent
     private float _angle; // current angle in radians
     private float _autoShootTimer;
     private readonly List<Bullet> _bullets = [];
+    private bool _pendingRemoveAllBullets;
 
     public CircleShooter(Vector2 position, float radius = 10, float stickLength = 30, Color? color = null,
         float rotationSpeed = 3f, float bulletSpeed = 400f, float bulletRadius = 5f,
@@ -65,6 +66,14 @@ public class CircleShooter : IComponent
 
     public void Update(UpdateContext context)
     {
+        if (_pendingRemoveAllBullets)
+        {
+            foreach (var bullet in _bullets)
+                context.RemoveComponent(bullet);
+            _bullets.Clear();
+            _pendingRemoveAllBullets = false;
+        }
+
         _angle += _rotationSpeed * GetFrameTime();
 
         if (ShouldShoot())
@@ -75,6 +84,11 @@ public class CircleShooter : IComponent
             _bullets.Add(bullet);
             context.AddComponent(bullet);
         }
+    }
+
+    public void RemoveAllBullets()
+    {
+        _pendingRemoveAllBullets = true;
     }
 
     public void OnRemoved(UpdateContext context)
