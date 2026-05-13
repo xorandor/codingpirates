@@ -11,6 +11,7 @@ public class CircleShooter : IComponent
     private readonly float _radius;
     private readonly float _stickLength;
     private readonly Color _color;
+    private readonly Color _cannonColor;
     private readonly float _rotationSpeed; // radians per second
     private readonly float _bulletSpeed;
     private readonly float _bulletRadius;
@@ -27,12 +28,14 @@ public class CircleShooter : IComponent
     public CircleShooter(Vector2 position, float radius = 10, float stickLength = 30, Color? color = null,
         float rotationSpeed = 3f, float bulletSpeed = 400f, float bulletRadius = 5f,
         KeyboardKey? shootKey = null, MouseButton? shootButton = null,
-        float? autoShootIntervalMs = null, int maxBounces = 0)
+        float? autoShootIntervalMs = null, int maxBounces = 0,
+        Color? cannonColor = null)
     {
         _position = position;
         _radius = radius;
         _stickLength = stickLength;
         _color = color ?? Color.Black;
+        _cannonColor = cannonColor ?? _color;
         _rotationSpeed = rotationSpeed;
         _bulletSpeed = bulletSpeed;
         _bulletRadius = bulletRadius;
@@ -100,12 +103,12 @@ public class CircleShooter : IComponent
 
     public void Render()
     {
-        DrawCircleV(_position, _radius, _color);
+        DrawCircleV(_position, _radius, _cannonColor);
 
         Vector2 direction = new((float)Math.Cos(_angle), (float)Math.Sin(_angle));
         Vector2 stickEnd = _position + direction * (_radius + _stickLength);
         Vector2 stickStart = _position + direction * _radius;
-        DrawLineEx(stickStart, stickEnd, 3f, _color);
+        DrawLineEx(stickStart, stickEnd, 3f, _cannonColor);
     }
 
     public class Bullet : IComponent
