@@ -16,6 +16,10 @@ public class Player : IComponent
     private float _magnetTimeLeft;
     private float _magnetPullRadius;
     private const float MagnetPullSpeed = 350f;
+    private readonly KeyboardKey? _pushKey;
+    private readonly float _pushRadius;
+    private readonly float _pushCooldown;
+    private float _pushCooldownTimer;
     private bool _alive = true;
     private bool _moving;
     private float _walkTimer;
@@ -29,7 +33,8 @@ public class Player : IComponent
     public event EventHandler<Coin> OnCoinCollected;
     public event EventHandler OnPlayerDied;
 
-    public Player(Vector2 position, float speed, float radius, Color color, bool constrainToScreen = false, int maxLives = 3)
+    public Player(Vector2 position, float speed, float radius, Color color, bool constrainToScreen = false, int maxLives = 3,
+        KeyboardKey? pushKey = null, float pushRadius = 100f, float pushCooldown = 2f)
     {
         _position = position;
         _startPosition = position;
@@ -39,6 +44,9 @@ public class Player : IComponent
         ConstrainToScreen = constrainToScreen;
         _maxLives = maxLives;
         _lives = maxLives;
+        _pushKey = pushKey;
+        _pushRadius = pushRadius;
+        _pushCooldown = pushCooldown;
     }
 
     public void Update(UpdateContext context)
@@ -59,6 +67,7 @@ public class Player : IComponent
                 _alive = true;
                 _lives = _maxLives;
                 _magnetTimeLeft = 0f;
+                _pushCooldownTimer = 0f;
                 _position = _startPosition;
 
                 if (OnGameStarted != null)
@@ -146,6 +155,25 @@ public class Player : IComponent
                 if (Vector2.Distance(_position, coin.Position) < _magnetPullRadius)
                     coin.MoveToward(_position, pullStep);
             }
+        }
+
+        // Skub kugler væk når push-tasten er sat og blev trykket — kun hvis cooldown er udløbet
+        if (_pushCooldownTimer > 0f)
+            _pushCooldownTimer -= GetFrameTime();
+
+        if (_pushKey != null && _pushCooldownTimer <= 0f && IsKeyPressed(_pushKey.Value))
+        {
+            bool pushedAny = false;
+            foreach (var bullet in context.GetComponents<CircleShooter.Bullet>())
+            {
+                if (Vector2.Distance(_position, bullet.Position) < _pushRadius)
+                {
+                    bullet.PushAwayFrom(_position);
+                    pushedAny = true;
+                }
+            }
+            if (pushedAny)
+                _pushCooldownTimer = _pushCooldown;
         }
 
         // Tjek kollision med alle kugler fra CircleShooter

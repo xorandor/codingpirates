@@ -162,5 +162,13 @@ public class CircleShooter : IComponent
         {
             DrawCircleV(_position, _radius, _color);
         }
+
+        public void PushAwayFrom(Vector2 source)
+        {
+            Vector2 away = _position - source;
+            float length = away.Length();
+            if (length > 0f)
+                _direction = away / length;
+        }
     }
 }
