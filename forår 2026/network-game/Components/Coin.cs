@@ -7,7 +7,7 @@ namespace Components;
 
 public class Coin : IComponent
 {
-    private readonly Vector2 _position;
+    private Vector2 _position;
     private readonly float _radius;
     private readonly Color innerColor;
     private readonly Color outerColor;
@@ -29,6 +29,16 @@ public class Coin : IComponent
     public void Update(UpdateContext context)
     {
         _animTimer += GetFrameTime();
+    }
+
+    public void MoveToward(Vector2 target, float distance)
+    {
+        Vector2 delta = target - _position;
+        float length = delta.Length();
+        if (length <= distance)
+            _position = target;
+        else
+            _position += delta / length * distance;
     }
 
     public void Render()

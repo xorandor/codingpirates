@@ -11,6 +11,11 @@ public class Player : IComponent
     private readonly float _radius;
     private readonly Color _color;
     private readonly Vector2 _startPosition;
+    private readonly int _maxLives;
+    private int _lives;
+    private float _magnetTimeLeft;
+    private float _magnetPullRadius;
+    private const float MagnetPullSpeed = 350f;
     private bool _alive = true;
     private bool _moving;
     private float _walkTimer;
@@ -24,7 +29,7 @@ public class Player : IComponent
     public event EventHandler<Coin> OnCoinCollected;
     public event EventHandler OnPlayerDied;
 
-    public Player(Vector2 position, float speed, float radius, Color color, bool constrainToScreen = false)
+    public Player(Vector2 position, float speed, float radius, Color color, bool constrainToScreen = false, int maxLives = 3)
     {
         _position = position;
         _startPosition = position;
@@ -32,6 +37,8 @@ public class Player : IComponent
         _radius = radius;
         _color = color;
         ConstrainToScreen = constrainToScreen;
+        _maxLives = maxLives;
+        _lives = maxLives;
     }
 
     public void Update(UpdateContext context)
@@ -50,6 +57,8 @@ public class Player : IComponent
             if (IsKeyPressed(KeyboardKey.Enter))
             {
                 _alive = true;
+                _lives = _maxLives;
+                _magnetTimeLeft = 0f;
                 _position = _startPosition;
 
                 if (OnGameStarted != null)
@@ -104,16 +113,56 @@ public class Player : IComponent
             }
         }
 
+        // Saml power-buffs op (giver ekstra liv)
+        foreach (var buff in context.GetComponents<PowerBuffExtraHealth>())
+        {
+            float distance = Vector2.Distance(_position, buff.Position);
+            if (distance < _radius + buff.Radius)
+            {
+                context.RemoveComponent(buff);
+                _lives++;
+            }
+        }
+
+        // Saml mønt-magnet buff op
+        foreach (var magnet in context.GetComponents<PowerBuffCoinMagnet>())
+        {
+            float distance = Vector2.Distance(_position, magnet.Position);
+            if (distance < _radius + magnet.Radius)
+            {
+                context.RemoveComponent(magnet);
+                _magnetTimeLeft = magnet.Duration;
+                _magnetPullRadius = magnet.PullRadius;
+            }
+        }
+
+        // Aktiv magnet-effekt: træk mønter inden for pull-radius hen mod spilleren
+        if (_magnetTimeLeft > 0f)
+        {
+            _magnetTimeLeft -= GetFrameTime();
+            float pullStep = MagnetPullSpeed * GetFrameTime();
+            foreach (var coin in context.GetComponents<Coin>())
+            {
+                if (Vector2.Distance(_position, coin.Position) < _magnetPullRadius)
+                    coin.MoveToward(_position, pullStep);
+            }
+        }
+
         // Tjek kollision med alle kugler fra CircleShooter
         foreach (var bullet in context.GetComponents<CircleShooter.Bullet>())
         {
             float distance = Vector2.Distance(_position, bullet.Position);
             if (distance < _radius + bullet.Radius)
             {
-                _alive = false;
-                if (OnPlayerDied != null)
+                context.RemoveComponent(bullet);
+                _lives--;
+                if (_lives <= 0)
                 {
-                    OnPlayerDied(this, EventArgs.Empty);
+                    _alive = false;
+                    if (OnPlayerDied != null)
+                    {
+                        OnPlayerDied(this, EventArgs.Empty);
+                    }
                 }
                 break;
             }
@@ -205,6 +254,15 @@ public class Player : IComponent
         float visorX = _facingRight ? x + 2f * s : x - 11f * s;
         DrawRectangleV(new Vector2(visorX, y - 15f * s), new Vector2(9f * s, 2.5f * s), hatColor);
 
+        // Lille magnet ved siden af kasketten når mønt-magnet er aktiv
+        if (_alive && _magnetTimeLeft > 0f)
+        {
+            float magnetSize = 5f * s;
+            float magnetX = x + 13f * s;
+            float magnetY = y - 19f * s;
+            PowerBuffCoinMagnet.DrawMagnet(new Vector2(magnetX, magnetY), magnetSize);
+        }
+
         if (!_alive)
         {
             // Kryds over øjne
@@ -221,11 +279,38 @@ public class Player : IComponent
             int textWidth = MeasureText(text, fontSize);
             DrawText(text, (int)x - textWidth / 2, (int)(y + 22f * s), fontSize, Color.Red);
         }
+
+        // Hjerter i øvre højre hjørne — placeret under statuslinjen (som bruger fontSize 40)
+        float heartSize = 28f;
+        float gap = 6f;
+        float rightMargin = 10f;
+        float topY = 60f;
+        for (int i = 0; i < _lives; i++)
+        {
+            float centerX = GetScreenWidth() - rightMargin - heartSize / 2f - i * (heartSize + gap);
+            float centerY = topY + heartSize / 2f;
+            DrawHeart(new Vector2(centerX, centerY), heartSize, Color.Red);
+        }
     }
 
     private static void DrawLimb(Vector2 from, Vector2 to, float thickness, Color color)
     {
         DrawLineEx(from, to, thickness * 2f, color);
         DrawCircleV(to, thickness, color);
+    }
+
+    private static void DrawHeart(Vector2 center, float size, Color color)
+    {
+        float lobeRadius = size * 0.3f;
+        var leftLobe = new Vector2(center.X - size * 0.22f, center.Y - size * 0.18f);
+        var rightLobe = new Vector2(center.X + size * 0.22f, center.Y - size * 0.18f);
+        DrawCircleV(leftLobe, lobeRadius, color);
+        DrawCircleV(rightLobe, lobeRadius, color);
+
+        // Nedadvendt trekant der danner bunden af hjertet (CCW vertex-rækkefølge)
+        var topLeft = new Vector2(center.X - size * 0.5f, center.Y - size * 0.1f);
+        var topRight = new Vector2(center.X + size * 0.5f, center.Y - size * 0.1f);
+        var bottom = new Vector2(center.X, center.Y + size * 0.5f);
+        DrawTriangle(topLeft, bottom, topRight, color);
     }
 }
