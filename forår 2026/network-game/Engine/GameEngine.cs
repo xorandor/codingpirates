@@ -109,6 +109,8 @@ public class GameEngine
             if (_mode == GameMode.Server)
                 DrawPlayerList();
 
+            DrawCredits();
+
             EndDrawing();
         }
 
@@ -146,11 +148,29 @@ public class GameEngine
         int lineHeight = fontSize + 4;
         int x = 10;
         int totalLines = 1 + players.Count;
-        int startY = GetScreenHeight() - totalLines * lineHeight - 10;
+        // Reservér plads til credits-linjen nederst
+        int startY = GetScreenHeight() - totalLines * lineHeight - 10 - lineHeight;
 
         DrawText("Players:", x, startY, fontSize, Color.Black);
         for (int i = 0; i < players.Count; i++)
             DrawText(players[i], x, startY + (i + 1) * lineHeight, fontSize, Color.DarkGray);
+    }
+
+    private void DrawCredits()
+    {
+        var credits = _components
+            .Select(c => c.Credits)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct()
+            .ToList();
+
+        if (credits.Count == 0)
+            return;
+
+        int fontSize = 18;
+        int x = 10;
+        int y = GetScreenHeight() - fontSize - 10;
+        DrawText($"Credits: {string.Join(", ", credits)}", x, y, fontSize, Color.DarkGray);
     }
 
     private string? RunIpEntryScreen()
@@ -244,6 +264,7 @@ public interface IComponent
     void Update(UpdateContext context);
     void Render();
     void OnRemoved(UpdateContext context) { }
+    string? Credits => null;
 }
 
 public class UpdateContext
