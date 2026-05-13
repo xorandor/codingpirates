@@ -167,7 +167,7 @@ public class GameEngine
         if (credits.Count == 0)
             return;
 
-        int fontSize = 36;
+        int fontSize = 18;
         int x = 10;
         int y = GetScreenHeight() - fontSize - 10;
         DrawText($"Credits: {string.Join(", ", credits)}", x, y, fontSize, Color.DarkGray);
