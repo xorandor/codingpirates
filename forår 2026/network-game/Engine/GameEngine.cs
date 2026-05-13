@@ -148,8 +148,8 @@ public class GameEngine
         int lineHeight = fontSize + 4;
         int x = 10;
         int totalLines = 1 + players.Count;
-        // Reservér plads til credits-linjen nederst
-        int startY = GetScreenHeight() - totalLines * lineHeight - 10 - lineHeight;
+        // Reservér plads til credits-linjen nederst (credits bruger fontstørrelse 36)
+        int startY = GetScreenHeight() - totalLines * lineHeight - 10 - 40;
 
         DrawText("Players:", x, startY, fontSize, Color.Black);
         for (int i = 0; i < players.Count; i++)
@@ -167,7 +167,7 @@ public class GameEngine
         if (credits.Count == 0)
             return;
 
-        int fontSize = 18;
+        int fontSize = 36;
         int x = 10;
         int y = GetScreenHeight() - fontSize - 10;
         DrawText($"Credits: {string.Join(", ", credits)}", x, y, fontSize, Color.DarkGray);

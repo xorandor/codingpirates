@@ -7,6 +7,8 @@ namespace Components;
 
 public class WinCondition : IComponent
 {
+    public string? Credits => "Oliver";
+
     private readonly int _scoreToWin;
     private float _spawnTimer = 0f;
     private const float SpawnInterval = 0.05f;
