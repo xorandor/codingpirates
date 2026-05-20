@@ -20,11 +20,22 @@ public class Player : IComponent
     private readonly float _pushRadius;
     private readonly float _pushCooldown;
     private float _pushCooldownTimer;
+    private readonly KeyboardKey? _dashKey;
+    private readonly float _dashSpeed;
+    private readonly float _dashDuration;
+    private readonly float _dashCooldown;
+    private float _dashTimer;
+    private float _dashCooldownTimer;
+    private Vector2 _dashDirection;
     private bool _alive = true;
     private bool _moving;
     private float _walkTimer;
     private bool _facingRight = true;
     private bool _gameStarted;
+    private float _pushRingTimer;
+    private const float PushRingDuration = 0.4f;
+
+    public bool IsDashing => _dashTimer > 0f;
 
     public float Speed { get; set; }
     public bool ConstrainToScreen { get; set; }
@@ -35,6 +46,8 @@ public class Player : IComponent
         _lives = _maxLives;
         _magnetTimeLeft = 0f;
         _pushCooldownTimer = 0f;
+        _dashTimer = 0f;
+        _dashCooldownTimer = 0f;
         _position = _startPosition;
     }
 
@@ -43,7 +56,8 @@ public class Player : IComponent
     public event EventHandler OnPlayerDied;
 
     public Player(Vector2 position, float speed, float radius, Color color, bool constrainToScreen = false, int maxLives = 3,
-        KeyboardKey? pushKey = null, float pushRadius = 100f, float pushCooldown = 2f)
+        KeyboardKey? pushKey = null, float pushRadius = 100f, float pushCooldown = 2f,
+        KeyboardKey? dashKey = null, float dashSpeed = 600f, float dashDuration = 0.15f, float dashCooldown = 1f)
     {
         _position = position;
         _startPosition = position;
@@ -56,6 +70,10 @@ public class Player : IComponent
         _pushKey = pushKey;
         _pushRadius = pushRadius;
         _pushCooldown = pushCooldown;
+        _dashKey = dashKey;
+        _dashSpeed = dashSpeed;
+        _dashDuration = dashDuration;
+        _dashCooldown = dashCooldown;
     }
 
     public void Update(UpdateContext context)
@@ -102,22 +120,39 @@ public class Player : IComponent
 
         _moving = direction != Vector2.Zero;
 
-        if (_moving)
+        // Dash: start når tasten trykkes og der er retning og cooldown er udløbet
+        if (_dashCooldownTimer > 0f)
+            _dashCooldownTimer -= GetFrameTime();
+
+        if (_dashTimer > 0f)
+        {
+            _dashTimer -= GetFrameTime();
+            _position += _dashDirection * _dashSpeed * GetFrameTime();
+            if (_dashTimer <= 0f)
+                _dashCooldownTimer = _dashCooldown;
+        }
+        else if (_dashKey != null && _dashCooldownTimer <= 0f && IsKeyPressed(_dashKey.Value))
+        {
+            _dashDirection = _moving ? Vector2.Normalize(direction) : (_facingRight ? Vector2.UnitX : -Vector2.UnitX);
+            _dashTimer = _dashDuration;
+        }
+        else if (_moving)
         {
             direction = Vector2.Normalize(direction);
             _position += direction * Speed * GetFrameTime();
             _walkTimer += GetFrameTime() * 8f;
             if (direction.X > 0) _facingRight = true;
             else if (direction.X < 0) _facingRight = false;
-
-            if (ConstrainToScreen)
-            {
-                _position.X = Math.Clamp(_position.X, _radius, GetScreenWidth() - _radius);
-                _position.Y = Math.Clamp(_position.Y, _radius, GetScreenHeight() - _radius);
-            }
         }
 
-        // Saml coins op
+        if (ConstrainToScreen)
+        {
+            _position.X = Math.Clamp(_position.X, _radius, GetScreenWidth() - _radius);
+            _position.Y = Math.Clamp(_position.Y, _radius, GetScreenHeight() - _radius);
+        }
+
+        // Saml coins op (ikke under dash)
+        if (!IsDashing)
         foreach (var coin in context.GetComponents<Coin>())
         {
             float distance = Vector2.Distance(_position, coin.Position);
@@ -169,9 +204,12 @@ public class Player : IComponent
         // Skub kugler væk når push-tasten er sat og blev trykket — kun hvis cooldown er udløbet
         if (_pushCooldownTimer > 0f)
             _pushCooldownTimer -= GetFrameTime();
+        if (_pushRingTimer > 0f)
+            _pushRingTimer -= GetFrameTime();
 
         if (_pushKey != null && _pushCooldownTimer <= 0f && IsKeyPressed(_pushKey.Value))
         {
+            _pushRingTimer = PushRingDuration;
             bool pushedAny = false;
             foreach (var bullet in context.GetComponents<CircleShooter.Bullet>())
             {
@@ -185,7 +223,8 @@ public class Player : IComponent
                 _pushCooldownTimer = _pushCooldown;
         }
 
-        // Tjek kollision med alle kugler fra CircleShooter
+        // Tjek kollision med alle kugler fra CircleShooter (ikke under dash)
+        if (!IsDashing)
         foreach (var bullet in context.GetComponents<CircleShooter.Bullet>())
         {
             float distance = Vector2.Distance(_position, bullet.Position);
@@ -216,6 +255,33 @@ public class Player : IComponent
         // Benanimation: vinkel svinger frem og tilbage ved gang
         float legSwing = _moving ? (float)Math.Sin(_walkTimer) * 20f : 0f;
         float armSwing = _moving ? (float)Math.Sin(_walkTimer) * 25f : 0f;
+
+        // Dash-aura: blå glød rundt om spilleren mens dash er aktiv
+        if (IsDashing)
+        {
+            float t = _dashTimer / _dashDuration;
+            int alpha = (int)(180 * t);
+            DrawCircleV(_position, _radius * 2.2f, new Color(80, 180, 255, alpha));
+            DrawCircleV(_position, _radius * 1.6f, new Color(160, 220, 255, alpha));
+        }
+
+        // Dash cooldown-arc under spilleren (lille cirkel der fylder op når cooldown er klar)
+        if (_dashKey != null && !IsDashing && _dashCooldownTimer > 0f)
+        {
+            float progress = 1f - (_dashCooldownTimer / _dashCooldown);
+            float arcY = y + _radius * 2.2f;
+            DrawCircleSector(new Vector2(x, arcY), _radius * 0.6f, -90f, -90f + 360f * progress, 32, new Color(80, 180, 255, 180));
+            DrawRing(new Vector2(x, arcY), _radius * 0.5f, _radius * 0.6f, 0f, 360f, 32, new Color(60, 60, 60, 120));
+        }
+
+        // Push-ring: ekspanderende ring der viser push-effekten
+        if (_pushRingTimer > 0f && _pushKey != null)
+        {
+            float t = 1f - (_pushRingTimer / PushRingDuration);
+            float ringRadius = _pushRadius * t;
+            int alpha = (int)(200 * (1f - t));
+            DrawRing(_position, ringRadius - 4f, ringRadius + 4f, 0f, 360f, 48, new Color(255, 220, 50, alpha));
+        }
 
         Color hatColor = _alive ? _color : Color.Gray;
         Color shirtColor = _alive ? _color : Color.DarkGray;
