@@ -14,6 +14,8 @@ public class HighScore : IComponent
     public int Points { get; private set; }
     public string Label { get; set; }
 
+    public bool Persistent => true;
+
     public HighScore(Vector2 position, int fontSize = 30, Color? color = null, string label = "High Score")
     {
         _position = position;
