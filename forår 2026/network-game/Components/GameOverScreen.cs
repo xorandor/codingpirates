@@ -14,7 +14,9 @@ public class GameOverScreen : IComponent
     public bool IsVisible { get; private set; }
     public bool IsBlocking => IsVisible;
 
-    public GameOverScreen(string message = "GAME OVER", string subtitle = "Tryk Escape for at afslutte",
+    public Action? OnRestart { get; set; }
+
+    public GameOverScreen(string message = "GAME OVER", string subtitle = "Tryk Enter for at spille igen",
         Color? overlayColor = null, Color? messageColor = null, Color? subtitleColor = null)
     {
         _message = message;
@@ -27,7 +29,15 @@ public class GameOverScreen : IComponent
     public void Show() => IsVisible = true;
     public void Hide() => IsVisible = false;
 
-    public void Update(UpdateContext context) { }
+    public void Update(UpdateContext context)
+    {
+        if (!IsVisible) return;
+        if (IsKeyPressed(KeyboardKey.Enter) || IsKeyPressed(KeyboardKey.Space))
+        {
+            Hide();
+            OnRestart?.Invoke();
+        }
+    }
 
     public void Render()
     {

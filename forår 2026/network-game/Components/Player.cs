@@ -29,6 +29,15 @@ public class Player : IComponent
     public float Speed { get; set; }
     public bool ConstrainToScreen { get; set; }
 
+    public void Reset()
+    {
+        _alive = true;
+        _lives = _maxLives;
+        _magnetTimeLeft = 0f;
+        _pushCooldownTimer = 0f;
+        _position = _startPosition;
+    }
+
     public event EventHandler OnGameStarted;
     public event EventHandler<Coin> OnCoinCollected;
     public event EventHandler OnPlayerDied;
