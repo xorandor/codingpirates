@@ -1,6 +1,7 @@
 using Engine;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
+
 namespace Components;
 
 public class StartScreen : IComponent
@@ -10,9 +11,12 @@ public class StartScreen : IComponent
     private readonly Color _overlayColor;
     private readonly Color _titleColor;
     private readonly Color _subtitleColor;
-    private bool _done;
 
-    public bool IsBlocking => !_done;
+    public bool IsVisible { get; private set; } = true;
+    public bool IsBlocking => IsVisible;
+    public bool Persistent => true;
+
+    public Action? OnStart { get; set; }
 
     public StartScreen(string title, string subtitle = "Tryk Enter eller Mellemrum for at starte",
         Color? overlayColor = null, Color? titleColor = null, Color? subtitleColor = null)
@@ -24,20 +28,23 @@ public class StartScreen : IComponent
         _subtitleColor = subtitleColor ?? Color.LightGray;
     }
 
+    public void Show() => IsVisible = true;
+    public void Hide() => IsVisible = false;
+
     public void Update(UpdateContext context)
     {
-        if (_done) return;
+        if (!IsVisible) return;
 
         if (IsKeyPressed(KeyboardKey.Enter) || IsKeyPressed(KeyboardKey.Space))
         {
-            _done = true;
-            context.RemoveComponent(this);
+            Hide();
+            OnStart?.Invoke();
         }
     }
 
     public void Render()
     {
-        if (_done) return;
+        if (!IsVisible) return;
 
         int w = GetScreenWidth();
         int h = GetScreenHeight();

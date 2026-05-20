@@ -13,6 +13,7 @@ public class GameOverScreen : IComponent
 
     public bool IsVisible { get; private set; }
     public bool IsBlocking => IsVisible;
+    public bool Persistent => true;
 
     public Action? OnRestart { get; set; }
 

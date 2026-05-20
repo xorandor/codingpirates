@@ -40,10 +40,8 @@ public class GameEngine
 
     public void RemoveAll()
     {
-        foreach (var component in _components)
-        {
+        foreach (var component in _components.Where(c => !c.Persistent))
             _pendingRemove.Add(component);
-        }
     }
 
     public void Run()
@@ -270,6 +268,7 @@ public interface IComponent
     void OnRemoved(UpdateContext context) { }
     string? Credits => null;
     bool IsBlocking => false;
+    bool Persistent => false;
 }
 
 public class UpdateContext
