@@ -289,6 +289,45 @@ game.Add(new PowerBuffExtraHealth(new Vector2(200, 150), radius: 30f));
 
 ---
 
+### StartScreen
+Viser en startskærm med titeltekst og en besked om at trykke for at starte. Fjerner sig selv fra spillet når spilleren trykker Enter eller Mellemrum.
+
+```csharp
+// Simpel startskærm med titel
+game.Add(new StartScreen("Mit Spil"));
+
+// Med eget undertitel og farver
+game.Add(new StartScreen(
+    title: "Super Møntjagt",
+    subtitle: "Tryk Enter for at spille!",
+    titleColor: Color.Yellow,
+    subtitleColor: Color.White
+));
+```
+
+---
+
+### GameOverScreen
+Viser et "Game Over"-overlay når `.Show()` kaldes. Usynlig indtil den aktiveres.
+
+```csharp
+var gameOver = new GameOverScreen();
+game.Add(gameOver);
+
+// Vis game over når spilleren dør
+player.OnPlayerDied += (sender, e) => gameOver.Show();
+
+// Med eget budskab
+var gameOver = new GameOverScreen(
+    message: "DU TABTE!",
+    subtitle: "Tryk Escape for at afslutte",
+    messageColor: Color.Orange
+);
+game.Add(gameOver);
+```
+
+---
+
 ### WinCondition
 Holder øje med `Score` og aktiverer en vinde-animation når en bestemt pointgrænse nås.
 
