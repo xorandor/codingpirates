@@ -1,8 +1,6 @@
 using Engine;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
-using System.Numerics;
-
 namespace Components;
 
 public class GameOverScreen : IComponent
@@ -14,6 +12,7 @@ public class GameOverScreen : IComponent
     private readonly Color _subtitleColor;
 
     public bool IsVisible { get; private set; }
+    public bool IsBlocking => IsVisible;
 
     public GameOverScreen(string message = "GAME OVER", string subtitle = "Tryk Escape for at afslutte",
         Color? overlayColor = null, Color? messageColor = null, Color? subtitleColor = null)

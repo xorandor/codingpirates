@@ -82,8 +82,11 @@ public class GameEngine
 
         while (!WindowShouldClose())
         {
+            bool blocked = _components.Any(c => c.IsBlocking);
+
             foreach (var component in _components)
-                component.Update(context);
+                if (!blocked || component.IsBlocking)
+                    component.Update(context);
 
             foreach (var component in _pendingAdd)
                 _components.Add(component);
@@ -101,7 +104,8 @@ public class GameEngine
             ClearBackground(_backgroundColor);
 
             foreach (var component in _components)
-                component.Render();
+                if (!blocked || component.IsBlocking)
+                    component.Render();
 
             DrawStatusText();
             DrawFPS(10, 10);
@@ -265,6 +269,7 @@ public interface IComponent
     void Render();
     void OnRemoved(UpdateContext context) { }
     string? Credits => null;
+    bool IsBlocking => false;
 }
 
 public class UpdateContext

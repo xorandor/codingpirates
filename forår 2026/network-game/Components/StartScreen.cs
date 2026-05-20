@@ -12,6 +12,8 @@ public class StartScreen : IComponent
     private readonly Color _subtitleColor;
     private bool _done;
 
+    public bool IsBlocking => !_done;
+
     public StartScreen(string title, string subtitle = "Tryk Enter eller Mellemrum for at starte",
         Color? overlayColor = null, Color? titleColor = null, Color? subtitleColor = null)
     {
