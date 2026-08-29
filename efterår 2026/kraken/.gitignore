@@ -18,4 +18,9 @@ obj/
 
 # Filer spillet selv laver naar man spiller
 highscore.txt
-kraken-billede*.png
+
+# raylib har sin egen F12-genvej indbygget, som ikke kan slaas fra
+screenshot*.png
+
+# Visual Studio brugerfil
+*.user

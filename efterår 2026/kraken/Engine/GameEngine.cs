@@ -29,8 +29,6 @@ public class GameEngine
     private bool _debugView;
     private float _savedTilt;
     private float _savedTurn;
-    private string? _pendingScreenshot;
-    private int _screenshotCount;
 
     public string Title { get; set; } = "Kraken";
     public int Width { get; set; } = 1280;
@@ -135,7 +133,6 @@ public class GameEngine
             LocalInput = Input.FromKeyboard();
 
             HandleDebugView();
-            HandleScreenshotKey();
 
             bool blocked = _components.Any(c => c.IsBlocking && c.Enabled);
 
@@ -149,7 +146,6 @@ public class GameEngine
             FlushPendingChanges();
 
             RenderFrame();
-            SaveScreenshotIfAsked();
         }
 
         Shutdown();
@@ -333,29 +329,6 @@ public class GameEngine
         Networking.StartListening();
         FlushPendingChanges();
         return true;
-    }
-
-    /// <summary>
-    /// Filnavnet det naeste F12-billede bliver gemt under. Kald den for at tage et billede
-    /// fra koden - fx naar spilleren vinder.
-    /// </summary>
-    public void TakePicture(string fileName = "kraken-billede.png") => _pendingScreenshot = fileName;
-
-    private void HandleScreenshotKey()
-    {
-        if (IsKeyPressed(KeyboardKey.F12))
-            TakePicture($"kraken-billede-{_screenshotCount + 1}.png");
-    }
-
-    private void SaveScreenshotIfAsked()
-    {
-        if (_pendingScreenshot == null) return;
-
-        // Skal ske EFTER EndDrawing, ellers er billedet ikke faerdigtegnet endnu.
-        TakeScreenshot(_pendingScreenshot);
-        Console.WriteLine($"Billede gemt som {_pendingScreenshot}");
-        _pendingScreenshot = null;
-        _screenshotCount++;
     }
 
     private void HandleDebugView()

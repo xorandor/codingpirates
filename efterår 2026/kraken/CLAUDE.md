@@ -12,7 +12,9 @@ The engine exists to be *taught*, not to be complete. Every design decision is j
 
 ## Tech stack
 
-- C# on .NET 9 (`net9.0`). The machine has SDK 9.0.304 only — do not target net10.0 without checking.
+- C# on .NET 10 (`net10.0`). Requires the .NET 10 SDK/runtime — a machine with only .NET 9 can neither
+  build nor run this. Retargeted from `net9.0` on 2026-08-29 when the second work machine turned out
+  to have SDK 10.0.400 only.
 - Raylib-cs 7.0.2 for everything graphical and audio.
 - .NET BCL for networking (raw TCP, line-based text protocol).
 
@@ -124,7 +126,7 @@ command first, receivers ignore unknown commands without crashing. Floats always
 ## Development setup
 
 `dotnet run` from this folder. `dotnet run -- klient <ip> <navn>` starts in client mode and skips the
-prompts. F3 toggles the 3D debug view; F12 saves a screenshot.
+prompts. F3 toggles the 3D debug view.
 
 **On a fresh checkout there is no `program.cs`** — it is gitignored on purpose. Copy
 `program.cs.template` to `program.cs` before the first `dotnet run`, or the build fails with no
@@ -132,16 +134,44 @@ entry point. Same for `MyComponents/` (only its README and template are tracked)
 
 **Verifying visually on this machine:** GDI screen capture (`CopyFromScreen`) returns a blank white
 rectangle for the raylib window — it cannot read the accelerated surface, and this is true for raw
-raylib too, not just Kraken. Use `game.TakePicture(...)` / F12, which calls raylib's own
-`TakeScreenshot`, and read the resulting png. Killing the app leaves a ghost white window behind
-that is easy to mistake for a live one.
+raylib too, not just Kraken. Killing the app also leaves a ghost white window behind that is easy to
+mistake for a live one. Synthetic keystrokes (`SendKeys`, `AppActivate`) do not reach the window
+either, so a script cannot press a key.
+
+Kraken has **no screenshot feature**, and does not need one. Nothing in the engine has to change to
+take a picture — put a throwaway component in `program.cs` (gitignored) and capture from `Update`:
+
+```csharp
+public override void Update(GameContext context)   // ikke Render/RenderUI
+{
+    var img = Raylib.LoadImageFromScreen();
+    Raylib.ExportImage(img, "test.png");
+    Raylib.UnloadImage(img);
+}
+```
+
+- **It must be `Update`.** `Update` runs before `RenderFrame()`, so the buffer still holds the
+  previous frame, complete: HUD, FPS counter, IP, credits, blocking overlays and all. Capturing from
+  `Render`/`RenderUI` instead lands mid-render — a component's `RenderUI` runs before the other
+  components' and before `RenderEngineUI()`, so the picture comes out with the world but no HUD.
+  Verified both ways on 2026-08-29.
+- Wait a beat before the first shot (`context.After(1.5f, ...)`); frame zero has nothing to read.
+  Give the component `RunsWhileBlocked => true` or it will not tick behind a start screen.
+- Use `ExportImage`, not `TakeScreenshot`: `TakeScreenshot` calls `GetFileName` internally, throws
+  any directory away and always writes next to the exe.
+- Reading the framebuffer costs that frame — the FPS counter dips in the picture. Harmless.
+- Delete the component and the pngs afterwards.
+
+raylib's **own F12 binding is compiled into `EndDrawing`** and cannot be turned off, so a real F12
+press drops a `screenshotNNN.png` next to the exe, with a counter that restarts every run and
+overwrites. `.gitignore` covers it.
 
 ## Status (2026-08-29)
 
 The engine is **feature-complete for the start of the season** and builds clean. Everything on the
 original plan is done:
 
-1. ~~Copy from `forår 2026`, rename, net9.0~~
+1. ~~Copy from `forår 2026`, rename, target a current .NET~~
 2. ~~3D loop, Render/RenderUI split, orthographic camera, asset cache~~
 3. ~~Object-initializer convention, all 18 spring components ported~~
 4. ~~Collision, capability interfaces, tags, events, timers, shared state~~
@@ -150,6 +180,13 @@ original plan is done:
 
 ### What has actually been run and checked
 
+- **Verified again on a second machine (2026-08-29, Intel Arc 140V, SDK 10.0.400):** fresh checkout,
+  `program.cs` copied from the template, builds 0/0 and renders the full template game — coins,
+  player, cannon and bullet, both power-ups, HUD (score, coins left, high score, lives, IP, 60 FPS)
+  and the credits line. Captured from a throwaway component in `program.cs`, with no engine change
+  and no keypress.
+- **F3 confirmed by hand (2026-08-29):** it tilts the world to a raised three-quarter view. Kraken has
+  no F12 binding of its own; raylib's is what fires, and the stray png is gitignored.
 - Builds with 0 errors and 0 warnings.
 - Single player renders correctly (coins, players, cannon, bullets, buffs, HUD, credits).
 - Server + client on one machine: client mirrors the server exactly, 32 components on both sides.
@@ -161,9 +198,6 @@ original plan is done:
 
 ### Known gaps
 
-- **F3 and F12 are wired but were never triggered by a real keypress.** Synthetic keystrokes
-  (`SendKeys`, `AppActivate`) do not reach the raylib window from a script. `TakePicture` itself is
-  verified; only the `IsKeyPressed` line is untested. Press them once by hand.
 - The O(n²) collision pass is fine at the scale we play at, but has no spatial partitioning.
 - A client that calls `Remove` on a server-controlled component loses it permanently; nothing
   guards against it yet.

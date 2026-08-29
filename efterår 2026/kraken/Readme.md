@@ -20,7 +20,6 @@ dotnet run -- klient 192.168.1.25 Anna  # spring spoergeskaermene over
 | Tast | Gor |
 |---|---|
 | **F3** | 3D-visning til og fra. Proev den! |
-| **F12** | Gemmer et billede af skaermen som en png-fil |
 | Piletaster / WASD | Bevaeg dig |
 | Mellemrum | Knap **A** (fx skub) |
 | Venstre shift | Knap **B** (fx dash) |

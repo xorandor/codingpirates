@@ -46,9 +46,6 @@ public class GameContext
     /// <summary>Dit eget spillernavn. Tomt naar man koerer som server.</summary>
     public string MyName => _engine.PlayerName;
 
-    /// <summary>Gemmer et billede af skaermen som en png-fil. F12 goer det samme.</summary>
-    public void TakePicture(string fileName = "kraken-billede.png") => _engine.TakePicture(fileName);
-
     // -------------------------------------------------------------- Komponenter
 
     /// <summary>Komponenten kommer med i spillet efter denne frame.</summary>
