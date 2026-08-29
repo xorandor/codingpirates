@@ -1,0 +1,21 @@
+# Din egen komposition af spillet. Kommer aldrig i git.
+program.cs
+
+# Dine egne komponenter. Kommer aldrig i git.
+MyComponents/*
+!MyComponents/README.md
+!MyComponents/*.template
+
+# Dine egne billeder, modeller og lyde. Kommer aldrig i git.
+Assets/mine/
+
+# Byggeoutput og IDE-filer
+bin/
+obj/
+.idea/
+.vs/
+.claude/
+
+# Filer spillet selv laver naar man spiller
+highscore.txt
+kraken-billede*.png

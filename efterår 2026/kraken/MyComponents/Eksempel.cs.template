@@ -1,0 +1,55 @@
+// Kopier denne fil til fx 'Fjende.cs' i den samme mappe, og byg videre paa den.
+// Filer i MyComponents/ kommer aldrig i git.
+
+using System.Numerics;
+using Kraken;
+using Raylib_cs;
+using static Raylib_cs.Raylib;
+
+namespace Mine;
+
+public class Eksempel : Component
+{
+    // Skriv dit navn her, saa staar det nederst i spillet.
+    public override string? Credits => "Dit navn";
+
+    // Properties med en standardvaerdi. Saa kan man skrive:
+    //   game.Add(new Eksempel { Speed = 500, Color = Color.Lime });
+    // og kun saette det man vil aendre.
+    public float Speed { get; set; } = 200f;
+    public float Size { get; set; } = 30f;
+    public Color Color { get; set; } = Color.Red;
+
+    private Vector3 _direction = new(1, 0.6f, 0);
+
+    // Kaldes een gang, naar komponenten kommer med i spillet.
+    // Vinduet er aabent her, saa det er foerst her du maa loade billeder og lyde.
+    public override void OnAdded(GameContext context)
+    {
+        _direction = Vector3.Normalize(_direction);
+    }
+
+    // Kaldes een gang pr. frame. Al logik hoerer til her.
+    public override void Update(GameContext context)
+    {
+        Position += _direction * Speed * context.DeltaTime;
+
+        float halfHeight = context.Camera.Height / 2f;
+        float halfWidth = halfHeight * GetScreenWidth() / GetScreenHeight();
+
+        if (MathF.Abs(Position.X) > halfWidth - Size / 2f) _direction.X = -_direction.X;
+        if (MathF.Abs(Position.Y) > halfHeight - Size / 2f) _direction.Y = -_direction.Y;
+    }
+
+    // Tegner i 3D-verdenen. y peger opad.
+    public override void Render()
+    {
+        Draw.Ball(Position, Size / 2f, Color);
+    }
+
+    // Tegner ovenpaa, i skaermkoordinater. Her hoerer tekst, score og knapper til.
+    public override void RenderUI()
+    {
+        Draw.TextAbove("hej!", Position, Size, 16, Color.DarkGray);
+    }
+}
