@@ -50,6 +50,12 @@ game.Add(new HighScore());
 game.Add(new TagCounter { Tag = "moent", Label = "Monter tilbage" });
 game.Add(new WinCondition { ScoreToWin = 100 });
 
+// Et lys. Uden det tegnes alt fladt - proev at slette linjen og se forskellen.
+game.Add(new Light());
+
+// Lyd paa beskederne: samle op, tage skade, doe, vinde ... Ingen lydfiler - koden laver dem.
+game.Add(new SoundEffects());
+
 // -----------------------------------------------------------------------------
 // Selve spillet. Alt herunder bliver kun lavet paa serveren - klienten faar det
 // tilsendt. Prov at slette 'if' og se hvad der sker naar du starter som klient.

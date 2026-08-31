@@ -1,5 +1,5 @@
-# Din egen komposition af spillet. Kommer aldrig i git.
-program.cs
+# Din egen komposition af spillet (kun i roden - skabelonernes program.cs SKAL i git).
+/program.cs
 
 # Dine egne komponenter. Kommer aldrig i git.
 MyComponents/*

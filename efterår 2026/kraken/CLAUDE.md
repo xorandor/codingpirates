@@ -15,7 +15,9 @@ The engine exists to be *taught*, not to be complete. Every design decision is j
 - C# on .NET 10 (`net10.0`). Requires the .NET 10 SDK/runtime — a machine with only .NET 9 can neither
   build nor run this. Retargeted from `net9.0` on 2026-08-29 when the second work machine turned out
   to have SDK 10.0.400 only.
-- Raylib-cs 7.0.2 for everything graphical and audio.
+- Raylib-cs 7.0.2 for everything graphical and audio. `AllowUnsafeBlocks` is on because raylib
+  exposes a model's materials as a raw pointer (`model.Materials[0]`); the `unsafe` blocks live in
+  `Engine/` only.
 - .NET BCL for networking (raw TCP, line-based text protocol).
 
 ## Coordinate system — read this first
@@ -34,15 +36,74 @@ the xy-plane, so a 2D game just works while still getting meshes, textures and d
 `GameCamera.Tilt` / `Turn` / `Perspective` exist so a 2D scene can be shown as the 3D scene it
 actually is. F3 toggles a debug view that does exactly that.
 
+- `Perspective = true` keeps the framing: `Distance` defaults to 0 = automatic, which places the
+  camera so z = 0 is exactly as large as in orthographic (`Height / (2·tan(fov/2))`, 869 units at
+  720/45°). Set `Distance` yourself only to change that on purpose.
+- raylib's default far clip plane is 1000 units. With the camera 869 units out that clips anything
+  deeper than z ≈ −130, so `Run()` raises it to 20000 (`Rlgl.SetClipPlanes`).
+- F3 in perspective swings the camera physically and pushes the field edges out of frame. It is a
+  debug view; live with it.
+
+## Rendering and light
+
+Everything is **unlit until a `Light` exists** — raylib's default shader is flat, so a sphere is a
+disc and rotation is invisible. `Engine/Lighting.cs` + `Assets/shaders/lys.{vs,fs}` add up to four
+lights, ambient and a specular glint. Opt-in by design: a game without `Light` renders exactly as
+before. Things to know before touching it:
+
+- raylib has **two draw paths**. Batch primitives (`DrawCubeV`, lines, billboards) go through
+  `BeginShaderMode`; models (`DrawModel`) use the shader in their material and ignore it. So
+  `Lighting.Begin/End` wrap the 3D pass, and every `Draw.Model`/`Draw.Ball` calls `Prepare(ref
+  model)` to swap the material shader in (or back out when lights are removed).
+- `DrawModel` writes `matModel`/`matNormal` and leaves them; batch geometry is already in world
+  space and needs identity. `AfterModel()` resets them — forget it and the next cube is lit as if
+  it sat where the last model was.
+- `Draw.Ball` is a cached unit-sphere **model** (`Assets.UnitSphere`), not `DrawSphere`, so it has
+  normals and shades correctly. Do not change it back.
+- Sprites, lines and `Draw.Circle` are deliberately unlit (`Lighting.Unlit`). Billboards have no
+  useful normals.
+- `Draw.Shaded(shader, draw)` runs a custom shader and first copies the light uniforms onto it
+  (`Lighting.Apply`) if it uses the same names as `lys.fs`. `glimt.fs` is the template to copy.
+  With no lights `Apply` sets ambient to white so the custom shader looks unlit, not black.
+- `Assets.Checkered` / `Assets.Ball` generate a texture / textured sphere from code under a name,
+  so a rolling ball needs no files. `Draw.Model` has axis+angle and `Quaternion` overloads; the
+  quaternion one sets `model.Transform`.
+
+`GameEngine.DeltaTime` is clamped to `MaxDeltaTime` (0.1 s) and `context.DeltaTime` reads that,
+not `GetFrameTime()`. Frame one includes window creation and connection (measured 0.2–1.4 s);
+without the clamp anything moving jumps that far.
+
+## Sound
+
+`Assets.Tone` / `Assets.Noise` synthesize 16-bit mono PCM from code and cache it under a name, so
+sounds need no files — same pattern as `Assets.Checkered`. A missing sound file becomes silence
+plus a console line, never a crash (same philosophy as the magenta texture). `Assets.Play(name,
+volume, pitch)` sets volume/pitch on the shared `Sound`, so they stick until the next Play sets
+them — the 1-arg overload resets to 1/1.
+
+- The `SoundEffects` component is the only thing that plays sounds by itself, and it listens only
+  to the event bus (`Collected`, `Damaged`, `Healed`, `Died`, `GameOver`, `GameWon`,
+  `PlayerJoined`). Built-in sound names start with `*`; a property set to `""` mutes that event.
+  Custom components that publish those events get sound for free.
+- **Network gap:** events fire where the logic runs, so in a networked game only the server hears
+  sounds. Client-side sound needs events replicated or local triggers; not built.
+- Raylib-cs 7.0.2 names raylib's `Wave.frameCount` **`SampleCount`** — the compile error is
+  unhelpful if you guess `FrameCount`. Sound frame counts read back at the device rate (48 kHz),
+  not the 44.1 kHz the samples were made at.
+
 ## Project structure
 
 The project must stay simple enough that a student can copy a single file into their own checkout
-without pulling from git. Four concepts:
+without pulling from git. Five concepts:
 
 - **`Engine/`** — the motor. Everything else may reference it; it references nothing else.
 - **`Components/`** — shared components, one class per file. **A component must never reference
   another component's concrete type.** Interact through the interaction model below instead.
-  Only the composition may reference this folder.
+  Only the composition may reference this folder. **Only generic scaffolding belongs here**
+  (HUD, screens, light, sound, camera, the reference specimens like `Coin`/`Player`) — a complete
+  game never does; complete games are game templates.
+- **`GameTemplates/`** — whole games as template folders, tracked in git. Copied out by students,
+  never edited in place. See the Game templates section below.
 - **`MyComponents/`** — a student's private components, namespace `Mine`. Gitignored wholesale.
   Never commit anything from here, and never assume another machine has these files.
 - **`program.cs`** — the composition. Gitignored. The only place allowed to reference everything.
@@ -51,6 +112,46 @@ without pulling from git. Four concepts:
 The spring originals are **not** copied into this folder. If you need to see how something used to
 work, read `forår 2026/network-game/` — it is still in the repo, one directory up. Do not modify
 anything under `forår 2026/`; that season is finished and stays as it was.
+
+## Game templates
+
+`GameTemplates/<Name>/` holds a whole game as a folder the student copies out. The one rule,
+phrased for a 12-year-old: **templates are copied out — never edited in place.** That keeps the
+no-conflicts guarantee: students still never modify tracked files.
+
+Each template folder contains:
+
+- **`program.cs`** — the game's composition.
+- **Component files**, one class per file, written in **`namespace Mine`** so they compile
+  unchanged after being copied into `MyComponents/`.
+- **`README.md`** (Danish) — three lines on what the game is, the copy instructions, plus a
+  handful of "proev at aendre..." ideas in increasing wildness. Students who stall steal an idea
+  from it, and Claude reads it when helping in that folder.
+
+Copy flow: the template's `program.cs` replaces the root `program.cs`; every other `.cs` file goes
+to `MyComponents/`. After that the whole game is the student's own, gitignored, free to wreck.
+The copy itself is a fine first Claude prompt of the evening ("kopier Pong-skabelonen ind som mit
+spil").
+
+Build rule: **`GameTemplates/` must be excluded from compilation** — the folders contain real
+`.cs` files including entry points, so without `<Compile Remove="GameTemplates/**" />` in
+`Kraken.csproj` the build breaks with duplicate `Main`s. Real `.cs` files (not `.template`
+renames) are deliberate: syntax highlighting for students, and no mass-renaming on copy.
+
+Gitignore rule: the ignore pattern for the root composition must stay **root-anchored** —
+`/program.cs`, not `program.cs`. An unanchored pattern matches at every level and silently keeps
+each template's `program.cs` out of git; that exact mistake shipped Pong without its composition
+once. `git status GameTemplates/` after adding a template is the check.
+
+A template may be shipped **complete** (evening one: copy Pong, then mutate it with Claude) or
+**with a deliberate hole** — the scaffolding components are provided, the game's core component
+(the ball, the tower, the car) is missing, and building it is the evening's challenge. The
+teacher's reference version of a missing component stays out of git.
+
+Didactic intent, so future changes preserve it: `Components/` grows with generic scaffolding,
+templates carry whole games, and the season ramps from "copy a complete template" via "template
+with a hole" to "own game from scratch". Complete games must therefore never migrate into
+`Components/`.
 
 ## Conventions
 
@@ -166,10 +267,10 @@ raylib's **own F12 binding is compiled into `EndDrawing`** and cannot be turned 
 press drops a `screenshotNNN.png` next to the exe, with a counter that restarts every run and
 overwrites. `.gitignore` covers it.
 
-## Status (2026-08-29)
+## Status (2026-08-30)
 
 The engine is **feature-complete for the start of the season** and builds clean. Everything on the
-original plan is done:
+original plan is done, and a second game (Pong) has been built on it to find what was missing:
 
 1. ~~Copy from `forår 2026`, rename, target a current .NET~~
 2. ~~3D loop, Render/RenderUI split, orthographic camera, asset cache~~
@@ -196,13 +297,47 @@ original plan is done:
 - Collision → `ICollectable` → score, `IHarmful` → damage, `Healed` → lives, and `GAMESTATE`
   replication (client showed the server's score) all confirmed by instrumented test runs.
 
+### The Pong case (2026-08-29/31)
+
+A one-player Pong, built to find engine gaps. It ships as the first game template:
+**`GameTemplates/Pong/`**, complete including the ball, so it works out of the box after the copy
+flow (template `program.cs` → root, the other `.cs` files → `MyComponents/` — verified exactly
+that way). All components are `namespace Mine`, one class per file. `Beskeder.cs` holds the
+contract between the ball and the rest (`IHarRetning` + the `BatRamt`/`Maal`/`BoldenServes`
+records — pure event bus, so a student can delete `Bold.cs` and write their own; the README's
+wildest idea says exactly that). Engine gaps fixed along the way:
+
+- `DeltaTime` clamp (first frame spike moved things a second's worth).
+- `Collider.Width/Height` — the ball needed the bat's height for the bounce angle and could not ask.
+- `Score` with empty `Label` rendered `: 0`.
+- `Camera.Distance` automatic, far clip raised — perspective was unusable without both.
+- Light, `Draw.Ball` as a real sphere, `Draw.Model` rotation overloads, `Assets.Checkered/Ball`,
+  `Draw.Circle`, `Draw.Shaded`, `Light` component.
+- Sound: `Assets.Tone/Noise` (synthesized, no files), `Play(name, volume, pitch)`, missing sound
+  is silence instead of a crash, and the `SoundEffects` component (event-driven). Pong plays serve,
+  wall, goal and a bat hit whose pitch rises with ball speed. Verified programmatically
+  (`IsSoundPlaying`, sample counts, missing-file path); listen once to judge the sound design.
+
+Everything above was verified with screenshots (rolling checkered sphere, shaded bats and ball,
+star parallax, camera shake, trail, hit flash + ring, shader glint) and MOENTJAGT re-checked with
+a `Light` added: coins, player and cannon shade correctly, HUD untouched. The keyboard path
+(`context.Input`) is the one thing a script cannot exercise; play it once.
+
+Measured: the O(n²) collision pass holds 60 FPS up to ~2000 colliders on the Arc 140V and breaks
+at 3000 (112 ms/frame). The template game has ~30. Not a problem; noted so nobody guesses.
+
 ### Known gaps
 
 - The O(n²) collision pass is fine at the scale we play at, but has no spatial partitioning.
 - A client that calls `Remove` on a server-controlled component loses it permanently; nothing
   guards against it yet.
+- `Lighting.Apply` looks uniform locations up by name on every call. Fine for a handful of shaded
+  draws per frame; cache per shader id if someone shades hundreds of things.
+- The template's `CoinSpawner` has no cap; left running for an hour it reaches the collider count
+  where frames get slow.
 
 ### Ideas not built, roughly by value
 
-Sound effects on the standard components; a tilemap / level component; sprite-sheet animation;
-client-side prediction so remote players stop lagging on a slow link; a spatial grid for collision.
+A tilemap / level component; sprite-sheet animation; sounds heard on clients in networked games
+(events only fire on the server); client-side prediction so remote players stop lagging on a slow
+link; a spatial grid for collision.

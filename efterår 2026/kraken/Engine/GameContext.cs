@@ -28,6 +28,9 @@ public class GameContext
     /// <summary>Kameraet. Flyt Target for at foelge en spiller, skru paa Height for at zoome.</summary>
     public GameCamera Camera => _engine.Camera;
 
+    /// <summary>Lyset. Normalt roerer du det ikke - komponenten Light laegger sig selv i det.</summary>
+    public Lighting Lighting => _engine.Lighting;
+
     /// <summary>Spillets faelles hukommelse - point, liv, hvilket bane man er paa.</summary>
     public GameState State => _engine.State;
 
@@ -35,7 +38,7 @@ public class GameContext
     public EventBus Events => _engine.Events;
 
     /// <summary>Sekunder siden sidste frame. Gang altid hastigheder med denne.</summary>
-    public float DeltaTime => Raylib_cs.Raylib.GetFrameTime();
+    public float DeltaTime => _engine.DeltaTime;
 
     /// <summary>
     /// Paa en klient: den figur serveren har sagt er din. null indtil serveren har svaret,

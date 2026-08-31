@@ -30,6 +30,12 @@ public class GameEngine
     private float _savedTilt;
     private float _savedTurn;
 
+    /// <summary>Sekunder siden sidste frame, klippet til MaxDeltaTime. Det er den komponenterne faar.</summary>
+    public float DeltaTime { get; private set; }
+
+    /// <summary>Det stoerste tidsspring en frame maa give. Beskytter mod hak og mod den lange foerste frame.</summary>
+    public float MaxDeltaTime { get; set; } = 0.1f;
+
     public string Title { get; set; } = "Kraken";
     public int Width { get; set; } = 1280;
     public int Height { get; set; } = 720;
@@ -52,6 +58,10 @@ public class GameEngine
     public string ServerIp { get; set; } = "";
 
     public GameCamera Camera { get; } = new();
+
+    /// <summary>Lyset i verden. Tomt = alt tegnes fladt som foer. Se komponenten Light.</summary>
+    public Lighting Lighting { get; } = new();
+
     public Networking Networking { get; } = new();
     public EventBus Events { get; } = new();
     public GameState State { get; }
@@ -113,6 +123,10 @@ public class GameEngine
         SetTargetFPS(TargetFps);
         InitAudioDevice();
 
+        // raylib klipper alt laengere vaek end 1000 units. Det er for lidt til en dyb baggrund
+        // (stjerner, bjerge) naar kameraet selv staar 900 units ude i perspektiv.
+        Rlgl.SetClipPlanes(1.0, 20000.0);
+
         if (WindowPosition is { } position)
             SetWindowPosition((int)position.X, (int)position.Y);
 
@@ -129,7 +143,10 @@ public class GameEngine
 
         while (!WindowShouldClose())
         {
-            float deltaTime = GetFrameTime();
+            // Klippet, fordi den foerste frame taeller al opstart med (typisk over et sekund),
+            // og alt der bevaeger sig ellers ville springe et sekunds vej paa een gang.
+            DeltaTime = MathF.Min(GetFrameTime(), MaxDeltaTime);
+            float deltaTime = DeltaTime;
             LocalInput = Input.FromKeyboard();
 
             HandleDebugView();
@@ -218,11 +235,13 @@ public class GameEngine
     {
         var camera = Camera.ToRaylib();
         Draw.Camera = camera;
+        Draw.Lighting = Lighting;
 
         BeginDrawing();
         ClearBackground(Background);
 
         BeginMode3D(camera);
+        Lighting.Begin(camera);
 
         // Tegn bagfra og frem, saa gennemsigtige sprites blander korrekt.
         // Det er derfor z er dit lag: hoejere z ligger oveni lavere z.
@@ -233,8 +252,9 @@ public class GameEngine
         foreach (var component in _scratch)
             if (component.Enabled) component.Render();
 
-        if (_debugView) RenderDebugWorld();
+        if (_debugView) Lighting.Unlit(RenderDebugWorld);
 
+        Lighting.End();
         EndMode3D();
 
         foreach (var component in _components)

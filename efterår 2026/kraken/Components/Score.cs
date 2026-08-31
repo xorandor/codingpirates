@@ -34,5 +34,5 @@ public class Score : Component
     public override void Update(GameContext context) => _points = context.State.Number(Key);
 
     public override void RenderUI()
-        => Draw.Text($"{Label}: {_points}", ScreenPosition, FontSize, Color);
+        => Draw.Text(Label.Length > 0 ? $"{Label}: {_points}" : _points.ToString(), ScreenPosition, FontSize, Color);
 }

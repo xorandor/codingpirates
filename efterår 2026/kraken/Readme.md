@@ -216,12 +216,16 @@ spawner.Cancel();                                    // ...indtil videre
 I `Render()` (3D-verdenen):
 
 ```csharp
-Draw.Ball(Position, 20, Color.Red);                     // kugle - ser ud som en cirkel
+Draw.Ball(Position, 20, Color.Red);                     // kugle - en flad cirkel, indtil der er lys
 Draw.Cube(Position, new Vector3(40, 40, 40), Color.Blue);
 Draw.Rectangle(Position, new Vector2(100, 20), Color.Green);
 Draw.Line(startPunkt, slutPunkt, Color.Black);
-Draw.Sprite("helt.png", Position, 60);                  // et billede
+Draw.Circle(Position, 40, Color.Yellow);                // en ring - god til effekter
+Draw.Sprite("helt.png", Position, 60);                  // et billede (faar aldrig lys)
 Draw.Model("skib.glb", Position, scale: 2f);            // en 3D-model
+Draw.Model("skib.glb", Position, Vector3.UnitY, vinkel, 2f);   // drejet om en akse
+Draw.Model("bold", Position, drejning, 13f);            // drejning er en Quaternion, se Lys-afsnittet
+Draw.Shaded(minShader, () => Draw.Cube(Position, size, color));  // med din egen shader
 ```
 
 I `RenderUI()` (skaermen):
@@ -244,8 +248,12 @@ Du maa ogsaa bruge raylib direkte. Samme regel: 3D-funktionerne i `Render`,
 game.Camera.Height = 720;              // hvor mange world units der er plads til i hojden
 game.Camera.Target = new(500, 0, 0);   // hvad kameraet kigger paa
 game.Camera.Tilt = 30;                 // grader - kig lidt oppefra
-game.Camera.Perspective = true;        // aegte perspektiv
+game.Camera.Perspective = true;        // aegte perspektiv - ting langt vaek bliver smaa
 ```
+
+Slaar du `Perspective` til, stiller kameraet sig af sig selv saa alt i z = 0 er praecis lige saa
+stort som foer. Ting med z under 0 bliver mindre (en stjernehimmel), ting med z over 0 stoerre.
+Vil du selv bestemme afstanden, saa saet `game.Camera.Distance`.
 
 Skal kameraet foelge en figur, saa brug komponenten `CameraFollow`.
 
@@ -265,6 +273,63 @@ git. Kraken kigger der foerst.
 
 Ser du et lyseroedt/sort ternet felt i stedet for dit billede, er filen ikke fundet -
 tjek navnet og hvilken mappe den ligger i.
+
+Nogle ting kan koden lave selv, uden en fil. De faar et navn og bruges som alt andet:
+
+```csharp
+Assets.Checkered("skak", Color.White, Color.Black);      // et ternet billede
+Assets.Ball("bold", "skak");                              // en kugle med billedet paa
+Draw.Model("bold", Position, drejning, 13f);              // tegn den - 13 er radius
+Assets.Shader("shaders/lys.vs", "shaders/glimt.fs");      // en shader fra to filer
+
+Assets.Tone("plink", 880, 1567, 0.09f);                  // en tone der glider op og doer ud
+Assets.Tone("brum", 220, 110, 0.2f, firkant: false);     // nedad og bloedere
+Assets.Noise("bang", 0.3f);                               // et sus - eksplosion, maal
+Assets.Play("plink");
+Assets.Play("plink", 0.5f, 2f);                           // halv styrke, en oktav op
+```
+
+Lav dem i `OnAdded`, ikke i en feltinitialisering - vinduet skal vaere aabent foerst.
+En lyd der mangler paa disken crasher ikke - den bliver til stilhed og en besked i konsollen.
+
+---
+
+## Lys
+
+Uden lys tegnes alt fladt: en kugle er en cirkel, en terning er en firkant. Saet **een**
+`Light` i spillet, og kugler, terninger og modeller faar en lys side, en skyggeside og et
+lille blankt glimt. Billeder (`Draw.Sprite`), linjer og ringe roeres ikke - de er flade.
+
+```csharp
+game.Add(new Light());                                            // en paere oppe til venstre
+game.Add(new Light { Position = new(400, 300, 600), Color = Color.Orange, Intensity = 0.7f });
+game.Add(new Light { Directional = true, Position = new(1, 1, 1) });   // som solen
+
+game.Lighting.Ambient = new Color(40, 40, 60, 255);   // grundlyset - moerkere = dybere skygger
+game.Lighting.Shininess = 64;                          // hvor skarpt glimtet er. 0 slaar det fra
+```
+
+Op til fire lys ad gangen. Et lys er en almindelig komponent, saa det kan flytte sig: saet
+`Position` i `Update`, og lyset foelger med.
+
+**Din egen shader.** Vil du have noget til at glimte, pulsere eller skifte farve, saa kopier
+`Assets/shaders/glimt.fs`, ret i de sidste linjer, og tegn med `Draw.Shaded`. Lyset saettes
+paa din shader af sig selv, saa laenge du beholder de uniforms der staar oeverst i filen.
+
+```csharp
+var shader = Assets.Shader("shaders/lys.vs", "shaders/min.fs");
+Raylib.SetShaderValue(shader, Raylib.GetShaderLocation(shader, "time"), (float)Raylib.GetTime(), ShaderUniformDataType.Float);
+Draw.Shaded(shader, () => Draw.Cube(Position, size, color));
+```
+
+**En kugle der ruller.** Byg drejningen op over tid med en `Quaternion`, og giv den til
+`Draw.Model`. Rulleaksen staar vinkelret paa retningen:
+
+```csharp
+var akse = Vector3.Normalize(new Vector3(-retning.Y, retning.X, 0));
+_drejning = Quaternion.Concatenate(_drejning, Quaternion.CreateFromAxisAngle(akse, fart * dt / radius));
+Draw.Model("bold", Position, _drejning, radius);
+```
 
 ---
 
@@ -422,6 +487,22 @@ game.Add(new CameraFollow());
 game.Add(new CameraFollow { Tag = "bil", Smoothing = 2f, FollowY = false });
 ```
 
+### Light
+En lyskilde. Saa snart der er een, faar kugler, terninger og modeller lys og skygge. Se afsnittet Lys.
+```csharp
+game.Add(new Light());
+game.Add(new Light { Position = new(400, 300, 600), Color = Color.Orange, Intensity = 0.7f });
+```
+
+### SoundEffects
+Lyd paa spillets beskeder: samle op, tage skade, faa liv, doe, vinde, tabe, komme med.
+Lydene er lavet af koden - ingen filer. Dine egne komponenter faar lyd gratis, hvis de
+publisher de samme beskeder.
+```csharp
+game.Add(new SoundEffects());
+game.Add(new SoundEffects { Collected = "min-plink.wav", Damaged = "" });   // egen fil / slaaet fra
+```
+
 ### NetworkPlayers
 Giver hver spiller der forbinder sig deres egen figur. Koerer kun paa serveren.
 ```csharp
@@ -437,9 +518,19 @@ game.Add(new NetworkPlayers { CreatePlayer = () => new Player { Speed = 400, Max
 |---|---|
 | `Engine/` | motoren. Rort kun i faellesskab. |
 | `Components/` | faelles komponenter. Kommer i git til alle. |
+| `GameTemplates/` | hele spil som skabeloner. Kopieres ud - rettes ALDRIG direkte. |
 | `MyComponents/` | **dine egne komponenter.** Kommer aldrig i git. |
 | `Assets/mine/` | **dine egne billeder og lyde.** Kommer aldrig i git. |
 | `program.cs` | **dit spil.** Kommer aldrig i git. |
+
+Vil du have et helt spil at starte fra, saa kig i `GameTemplates/` - fx `GameTemplates/Pong/`.
+Saadan kopierer du en skabelon ud (staar ogsaa i skabelonens egen README):
+
+1. Skabelonens `program.cs` -> roden af `kraken/`, oven i din egen.
+2. Alle skabelonens andre `.cs`-filer -> `MyComponents/`.
+3. `dotnet run`. Nu er hele spillet DIT - aendr alt.
+
+Ret aldrig i selve skabelonen. Hver skabelons README har ogsaa ideer til hvad du kan aendre.
 
 Vil du se hvordan noget saa ud i foraaret, ligger hele det gamle projekt stadig i
 `forår 2026/network-game/`. Men lad vaere med at rette i det - den saeson er slut.

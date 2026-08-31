@@ -12,6 +12,12 @@ naar du henter ny kode ned. Du kan lave, aendre og slette lige saa mange filer d
 
 Se `Eksempel.cs.template` for en fil du kan kopiere og bygge videre paa.
 
+## Et helt spil at starte fra
+
+Skabelonerne i `GameTemplates/` er hele spil. Deres `.cs`-komponentfiler skal kopieres
+**herind** (de er allerede i namespace `Mine`), og skabelonens `program.cs` op i roden
+oven i din egen. Saa er spillet dit. Opskriften staar i hver skabelons README.
+
 ## Reglerne
 
 - Filen skal ligge i namespace `Mine`.

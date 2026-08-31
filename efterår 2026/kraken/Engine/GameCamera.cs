@@ -24,8 +24,16 @@ public class GameCamera
     /// <summary>Grader. Drejer kameraet om y-aksen.</summary>
     public float Turn { get; set; }
 
-    /// <summary>Afstand fra Target ud til kameraet. Har kun betydning naar Perspective er true.</summary>
-    public float Distance { get; set; } = 400f;
+    /// <summary>
+    /// Afstand fra Target ud til kameraet. Har kun betydning naar Perspective er true.
+    /// 0 (standard) betyder automatisk: kameraet stilles saa ting i z=0 har praecis samme
+    /// stoerrelse som uden perspektiv. Saa kan du slaa Perspective til uden at spillet aendrer maal.
+    /// </summary>
+    public float Distance { get; set; }
+
+    /// <summary>Den afstand der faktisk bruges - enten Distance, eller den automatiske.</summary>
+    public float ActualDistance
+        => Distance > 0f ? Distance : Height / (2f * MathF.Tan(FieldOfView * MathF.PI / 360f));
 
     /// <summary>Saet til true for aegte perspektiv (ting langt vaek bliver mindre).</summary>
     public bool Perspective { get; set; }
@@ -51,7 +59,7 @@ public class GameCamera
 
         return new Camera3D
         {
-            Position = Target + offset * Distance,
+            Position = Target + offset * ActualDistance,
             Target = Target,
             Up = up,
             FovY = Perspective ? FieldOfView : Height,

@@ -34,6 +34,12 @@ public class Collider
     public static Collider Box(float width, float height, Vector2 offset = default)
         => new(false, 0f, new Vector2(width, height), offset);
 
+    /// <summary>Hvor bred formen er. For en cirkel er det diameteren.</summary>
+    public float Width => _isCircle ? _radius * 2f : _size.X;
+
+    /// <summary>Hvor hoej formen er. For en cirkel er det diameteren.</summary>
+    public float Height => _isCircle ? _radius * 2f : _size.Y;
+
     private Vector2 Centre(Vector3 position) => new Vector2(position.X, position.Y) + _offset;
 
     internal static bool Overlaps(Collider a, Vector3 aPosition, Collider b, Vector3 bPosition)
