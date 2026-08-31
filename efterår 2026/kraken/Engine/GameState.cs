@@ -54,8 +54,6 @@ public class GameState
     /// </summary>
     public void Set<T>(string key, T value) => _values[key] = value!;
 
-    public bool Has(string key) => _values.ContainsKey(key);
-
     public void Clear(string key)
     {
         if (_values.Remove(key)) _changed.Add(key);

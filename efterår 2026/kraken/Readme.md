@@ -121,7 +121,7 @@ Billeder og lyde maa **foerst** loades i `OnAdded` - foer da er vinduet der ikke
 
 Det her er hjertet i Kraken. En komponent maa **aldrig** kende en anden komponents type.
 Skriver du `if (other is Coin)`, saa kan din komponent ikke bruges i et spil uden mønter -
-og dine egne komponenter i `MyComponents/` kan ikke vaere med.
+og dine egne komponenter i `MyGames/` kan ikke vaere med.
 
 ### 1. Kollision
 
@@ -519,15 +519,18 @@ game.Add(new NetworkPlayers { CreatePlayer = () => new Player { Speed = 400, Max
 | `Engine/` | motoren. Rort kun i faellesskab. |
 | `Components/` | faelles komponenter. Kommer i git til alle. |
 | `GameTemplates/` | hele spil som skabeloner. Kopieres ud - rettes ALDRIG direkte. |
-| `MyComponents/` | **dine egne komponenter.** Kommer aldrig i git. |
+| `MyGames/` | **dine egne komponenter.** Kommer aldrig i git. |
 | `Assets/mine/` | **dine egne billeder og lyde.** Kommer aldrig i git. |
 | `program.cs` | **dit spil.** Kommer aldrig i git. |
 
 Vil du have et helt spil at starte fra, saa kig i `GameTemplates/` - fx `GameTemplates/Pong/`.
 Saadan kopierer du en skabelon ud (staar ogsaa i skabelonens egen README):
 
-1. Skabelonens `program.cs` -> roden af `kraken/`, oven i din egen.
-2. Alle skabelonens andre `.cs`-filer -> `MyComponents/`.
+1. Kopier HELE skabelon-mappen ind i `MyGames/` - i **Stifinder** eller terminalen, ALDRIG
+   inde fra Visual Studio. (VS aendrer projektfilen naar den kopierer, og saa kompilerer dit
+   spil bare ikke, uden fejl.)
+2. Kopier saa dens `program.cs` op i roden af `kraken/`, oven i din egen. Kopien der bliver
+   tilbage i `MyGames/` goer ingen skade - motoren ignorerer den.
 3. `dotnet run`. Nu er hele spillet DIT - aendr alt.
 
 Ret aldrig i selve skabelonen. Hver skabelons README har ogsaa ideer til hvad du kan aendre.
@@ -541,7 +544,7 @@ dine egne filer liggende praecis som de var.
 
 Har du lavet noget de andre skal have? Sig til, saa flytter vi det over i `Components/`.
 
-Se `MyComponents/README.md` for hvordan du kommer i gang med din foerste egen komponent.
+Se `MyGames/README.md` for hvordan du kommer i gang med din foerste egen komponent.
 
 ---
 

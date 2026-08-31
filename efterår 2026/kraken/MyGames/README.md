@@ -14,9 +14,11 @@ Se `Eksempel.cs.template` for en fil du kan kopiere og bygge videre paa.
 
 ## Et helt spil at starte fra
 
-Skabelonerne i `GameTemplates/` er hele spil. Deres `.cs`-komponentfiler skal kopieres
-**herind** (de er allerede i namespace `Mine`), og skabelonens `program.cs` op i roden
-oven i din egen. Saa er spillet dit. Opskriften staar i hver skabelons README.
+Skabelonerne i `GameTemplates/` er hele spil. Kopier hele skabelon-mappen **herind** i
+Stifinder eller terminalen - aldrig inde fra Visual Studio - og kopier saa dens
+`program.cs` op i roden oven i din egen. Komponenterne er allerede i namespace `Mine`,
+og kopien af `program.cs` der bliver tilbage herinde, ignorerer motoren af sig selv.
+Opskriften staar i hver skabelons README.
 
 ## Reglerne
 

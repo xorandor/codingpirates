@@ -64,8 +64,6 @@ public class NetworkKinds
 
     public void Register(string kind, Func<Component> create) => _factories[kind] = create;
 
-    public bool Knows(string kind) => _factories.ContainsKey(kind);
-
     internal Component Create(string kind)
         => _factories.TryGetValue(kind, out var create) ? create() : new UnknownEntity { Kind = kind };
 }

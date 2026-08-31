@@ -1,5 +1,5 @@
 // Kopier denne fil til fx 'Fjende.cs' i den samme mappe, og byg videre paa den.
-// Filer i MyComponents/ kommer aldrig i git.
+// Filer i MyGames/ kommer aldrig i git.
 
 using System.Numerics;
 using Kraken;

@@ -104,8 +104,10 @@ without pulling from git. Five concepts:
   game never does; complete games are game templates.
 - **`GameTemplates/`** — whole games as template folders, tracked in git. Copied out by students,
   never edited in place. See the Game templates section below.
-- **`MyComponents/`** — a student's private components, namespace `Mine`. Gitignored wholesale.
-  Never commit anything from here, and never assume another machine has these files.
+- **`MyGames/`** — a student's private components and copied-in game templates, namespace `Mine`.
+  Gitignored wholesale. Never commit anything from here, and never assume another machine has
+  these files. (Renamed from `MyComponents/` on 2026-08-31 — the rename must carry the
+  `.gitignore` entry, the tracked README/template inside it, and every mention in `Readme.md`.)
 - **`program.cs`** — the composition. Gitignored. The only place allowed to reference everything.
   `program.cs.template` is the committed starting point; keep the two in sync.
 
@@ -123,20 +125,37 @@ Each template folder contains:
 
 - **`program.cs`** — the game's composition.
 - **Component files**, one class per file, written in **`namespace Mine`** so they compile
-  unchanged after being copied into `MyComponents/`.
+  unchanged after being copied into `MyGames/`.
 - **`README.md`** (Danish) — three lines on what the game is, the copy instructions, plus a
   handful of "proev at aendre..." ideas in increasing wildness. Students who stall steal an idea
   from it, and Claude reads it when helping in that folder.
 
-Copy flow: the template's `program.cs` replaces the root `program.cs`; every other `.cs` file goes
-to `MyComponents/`. After that the whole game is the student's own, gitignored, free to wreck.
-The copy itself is a fine first Claude prompt of the evening ("kopier Pong-skabelonen ind som mit
-spil").
+Copy flow, done in **Windows Explorer (or the terminal, or by Claude) — never in Visual Studio's
+Solution Explorer**: copy the whole template folder into `MyGames/` (giving e.g.
+`MyGames/Pong/`), then copy its `program.cs` over the root `program.cs`. After that the whole
+game is the student's own, gitignored, free to wreck. The copy itself is a fine first Claude
+prompt of the evening ("kopier Pong-skabelonen ind som mit spil").
 
-Build rule: **`GameTemplates/` must be excluded from compilation** — the folders contain real
-`.cs` files including entry points, so without `<Compile Remove="GameTemplates/**" />` in
-`Kraken.csproj` the build breaks with duplicate `Main`s. Real `.cs` files (not `.template`
-renames) are deliberate: syntax highlighting for students, and no mass-renaming on copy.
+Why never Solution Explorer: a VS copy-paste of excluded files carries their item metadata along
+by **writing `<None Include>`/`<Compile Remove>` entries for the copies into `Kraken.csproj`** —
+the student's copy silently does not compile, and a tracked file has been modified, which is
+exactly the conflict the whole design exists to prevent. Explorer/terminal copies are inert:
+anything landing in `MyGames/` compiles via the default globs. To keep the hazard untriggerable,
+`GameTemplates/` is **removed from the project entirely** (`Compile Remove` + `None Remove`), so
+it does not appear in Solution Explorer at all — unless "Show All Files" is toggled on, which
+shows everything on disk regardless. Students read a template in Explorer, or after copying it
+out, where it sits in `MyGames/` as ordinary compiled files.
+
+Build rules in `Kraken.csproj`:
+
+- **`<Compile Remove="GameTemplates/**" />`** — the folders contain real `.cs` files including
+  entry points, so without it the build breaks with duplicate `Main`s. Real `.cs` files (not
+  `.template` renames) are deliberate: syntax highlighting for students, and no mass-renaming
+  on copy.
+- **`<Compile Remove="MyGames/**/program.cs" />`** — the whole-folder copy brings the template's
+  `program.cs` along into `MyGames/<Name>/`, and without this rule that stray copy is a second
+  entry point and the build breaks the moment a student follows the instructions. The root
+  `program.cs` is the only composition that compiles.
 
 Gitignore rule: the ignore pattern for the root composition must stay **root-anchored** —
 `/program.cs`, not `program.cs`. An unanchored pattern matches at every level and silently keeps
@@ -231,7 +250,7 @@ prompts. F3 toggles the 3D debug view.
 
 **On a fresh checkout there is no `program.cs`** — it is gitignored on purpose. Copy
 `program.cs.template` to `program.cs` before the first `dotnet run`, or the build fails with no
-entry point. Same for `MyComponents/` (only its README and template are tracked) and `Assets/mine/`.
+entry point. Same for `MyGames/` (only its README and template are tracked) and `Assets/mine/`.
 
 **Verifying visually on this machine:** GDI screen capture (`CopyFromScreen`) returns a blank white
 rectangle for the raylib window — it cannot read the accelerated surface, and this is true for raw
@@ -301,8 +320,10 @@ original plan is done, and a second game (Pong) has been built on it to find wha
 
 A one-player Pong, built to find engine gaps. It ships as the first game template:
 **`GameTemplates/Pong/`**, complete including the ball, so it works out of the box after the copy
-flow (template `program.cs` → root, the other `.cs` files → `MyComponents/` — verified exactly
-that way). All components are `namespace Mine`, one class per file. `Beskeder.cs` holds the
+flow (whole folder → `MyGames/Pong/`, its `program.cs` copied over the root one — verified
+2026-08-31 with the rename and the `MyGames/**/program.cs` exclusion in place: the stray copy
+compiles as nothing, the ten components compile from `MyGames/Pong/`, and the game renders).
+All components are `namespace Mine`, one class per file. `Beskeder.cs` holds the
 contract between the ball and the rest (`IHarRetning` + the `BatRamt`/`Maal`/`BoldenServes`
 records — pure event bus, so a student can delete `Bold.cs` and write their own; the README's
 wildest idea says exactly that). Engine gaps fixed along the way:

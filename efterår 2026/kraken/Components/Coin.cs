@@ -12,7 +12,7 @@ namespace Components;
 ///   game.Add(new Coin { Position = new(-200, 0, 0), Radius = 25, Value = 50, Sprite = "coin.png" });
 ///
 /// Moenten ved ingenting om hvem der samler den op. Den siger bare "jeg kan samles op"
-/// (ICollectable), og saa kan alle bruge den - ogsaa dine egne komponenter i MyComponents.
+/// (ICollectable), og saa kan alle bruge den - ogsaa dine egne komponenter i MyGames.
 /// </summary>
 public class Coin : Component, ICollectable
 {

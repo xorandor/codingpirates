@@ -39,7 +39,6 @@ kasse med navnet paa.
 | `JOINED` | `JOINED;<spillernavn>` | Jeg vil vaere med. Sendes een gang lige efter forbindelsen. |
 | `INPUT` | `INPUT;<6 tegn>` | Hvilke knapper der holdes nede: op, ned, venstre, hoejre, A, B - `1` for nede, `0` for oppe. `INPUT;100010` = op + A. Sendes naar noget aendrer sig, og mindst hvert halve sekund. |
 | `MESSAGE` | `MESSAGE;<tekst>` | Fri tekst. Bruges ikke af motoren - den er til dine egne paafund. |
-| `PING` | `PING` | Er du der? |
 
 ## Beskeder server → klient
 

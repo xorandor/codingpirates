@@ -98,7 +98,7 @@ game.Run();
 
 // -----------------------------------------------------------------------------
 // Du maa gerne skrive smaa komponenter direkte her i program.cs.
-// Skal de bruges i flere spil, hoerer de hjemme i MyComponents/.
+// Skal de bruges i flere spil, hoerer de hjemme i MyGames/.
 // -----------------------------------------------------------------------------
 class CoinSpawner : Component
 {

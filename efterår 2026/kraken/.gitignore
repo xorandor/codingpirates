@@ -2,9 +2,9 @@
 /program.cs
 
 # Dine egne komponenter. Kommer aldrig i git.
-MyComponents/*
-!MyComponents/README.md
-!MyComponents/*.template
+MyGames/*
+!MyGames/README.md
+!MyGames/*.template
 
 # Dine egne billeder, modeller og lyde. Kommer aldrig i git.
 Assets/mine/

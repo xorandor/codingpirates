@@ -32,8 +32,9 @@ public class Light : Component
 
     public override void OnAdded(GameContext context)
     {
-        // Standard: en paere lidt oppe, lidt til venstre og godt foran skaermen.
-        if (Position == Vector3.Zero) Position = new Vector3(-300, 300, 600);
+        // Standard: en paere oppe til venstre, ude fra siden. Staar lyset lige foran
+        // (stor z, lille x/y), rammer det alt forfra - og saa LIGNER det at der intet lys er.
+        if (Position == Vector3.Zero) Position = new Vector3(-500, 400, 250);
 
         Sync();
         context.Lighting.Lights.Add(_source);

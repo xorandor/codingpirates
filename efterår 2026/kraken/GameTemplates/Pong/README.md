@@ -6,11 +6,14 @@ alt sammen lavet af kode, ingen filer.
 
 ## Saadan faar du spillet
 
-1. Kopier `program.cs` herfra op i roden af `kraken/` - oven i den der ligger der.
-2. Kopier alle de andre `.cs`-filer herfra ind i `MyComponents/`.
+1. Kopier HELE `Pong`-mappen ind i `MyGames/` - i **Stifinder** eller terminalen,
+   ALDRIG inde fra Visual Studio. (VS aendrer projektfilen naar den kopierer, og saa
+   kompilerer dit spil bare ikke, uden fejl.)
+2. Kopier saa `MyGames/Pong/program.cs` op i roden af `kraken/` - oven i den der ligger der.
+   Kopien der bliver tilbage i `MyGames/Pong/` goer ingen skade; motoren ignorerer den.
 3. `dotnet run`
 
-Eller bed Claude: "kopier Pong-skabelonen ind som mit spil".
+Eller nemmest: bed Claude - "kopier Pong-skabelonen ind som mit spil".
 
 Ret ALDRIG i skabelonen her i mappen - kopier den ud, og rod saa alt det du vil.
 

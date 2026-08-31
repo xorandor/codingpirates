@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -20,12 +20,14 @@
     <None Include="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- Skabelonerne er hele spil med hver deres program.cs. De skal kunne LAESES, ikke
-       kompileres - ellers braekker bygget paa to Main-metoder. Kopier dem ud for at bruge dem.
-       None-linjen goer at filerne stadig kan SES (og kopieres) i Visual Studio. -->
+  <!-- Skabelonerne er hele spil med hver deres program.cs. De er ikke en del af projektet:
+       de maa ikke kompileres (to Main-metoder), og de skjules helt for Solution Explorer,
+       saa ingen fristes til at kopiere dem DERINDE - VS-kopiering skriver linjer ind i denne
+       fil, og kopien kompilerer saa ikke. Kopier dem ud med Stifinder, terminalen eller
+       Claude. Laes dem i Stifinder, eller efter kopiering - saa ligger de i MyGames/. -->
   <ItemGroup>
     <Compile Remove="GameTemplates\**" />
-    <None Include="GameTemplates\**\*.cs" />
+    <None Remove="GameTemplates\**" />
   </ItemGroup>
 
-</Project>
+  </Project>

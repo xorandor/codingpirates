@@ -3,7 +3,7 @@
 // Foerste til 11 vinder.
 //
 // Kopier denne fil op i roden som din program.cs, og de andre .cs-filer herfra
-// ind i MyComponents/. Saa: dotnet run. Se README.md her i mappen.
+// ind i MyGames/. Saa: dotnet run. Se README.md her i mappen.
 // -----------------------------------------------------------------------------
 
 using Components;
@@ -33,7 +33,8 @@ game.Add(new SoundEffects());
 
 // Selve banen.
 game.Add(new Stjerner());
-game.Add(new Light { Position = new(-350, 300, 650) });
+game.Add(new Light { Position = new(-550, 400, 180) });   // ude fra siden - frontlys ligner intet lys
+game.Lighting.Ambient = new Color(35, 35, 50, 255);          // moerkere grundlys = dybere skygger
 game.Add(new KameraRyk());
 game.Add(new Halespor { Tag = "bold" });
 game.Add(new MidterLinje());
