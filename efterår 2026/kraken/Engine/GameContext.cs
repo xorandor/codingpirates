@@ -62,7 +62,7 @@ public class GameContext
     /// <summary>Fjerner alt der ikke er markeret Persistent. Bruges naar spillet startes forfra.</summary>
     public void RemoveAll() => _engine.RemoveAll();
 
-    /// <summary>Alle komponenter af en bestemt type, fx context.Find&lt;Coin&gt;().</summary>
+    /// <summary>Alle komponenter af en bestemt type, fx context.Find&lt;HoppeBold&gt;().</summary>
     public IEnumerable<T> Find<T>() => _engine.Components.OfType<T>();
 
     /// <summary>Den foerste komponent af en bestemt type, eller null hvis der ikke er nogen.</summary>

@@ -17,7 +17,6 @@ obj/
 .claude/
 
 # Filer spillet selv laver naar man spiller
-highscore.txt
 
 # raylib har sin egen F12-genvej indbygget, som ikke kan slaas fra
 screenshot*.png

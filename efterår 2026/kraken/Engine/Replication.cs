@@ -48,11 +48,11 @@ public class StateReader
 }
 
 /// <summary>
-/// Klientens opslagsbog. Serveren sender et navn - fx "spiller" - og klienten slaar op
+/// Klientens opslagsbog. Serveren sender et navn - fx "markoer" - og klienten slaar op
 /// her for at finde ud af hvad den skal lave for at tegne det.
 ///
-///   game.NetworkKinds.Register("spiller", () =&gt; new Player());
-///   game.NetworkKinds.Register("moent", () =&gt; new Coin());
+///   game.NetworkKinds.Register("markoer", () =&gt; new Markoer());
+///   game.NetworkKinds.Register("hoppebold", () =&gt; new HoppeBold());
 ///
 /// Staar en slags ikke i bogen, tegner klienten en graa kasse med navnet paa i stedet
 /// for at gaa ned. Det er MENINGEN: du behoever ikke have den samme kode som serveren

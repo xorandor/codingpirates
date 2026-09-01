@@ -100,8 +100,11 @@ without pulling from git. Five concepts:
 - **`Components/`** — shared components, one class per file. **A component must never reference
   another component's concrete type.** Interact through the interaction model below instead.
   Only the composition may reference this folder. **Only generic scaffolding belongs here**
-  (HUD, screens, light, sound, camera, the reference specimens like `Coin`/`Player`) — a complete
-  game never does; complete games are game templates.
+  (screens, text, light, sound — the catalog is deliberately small: `StaticText`, `StartScreen`,
+  `Light`, `SoundEffects`) — a complete game never lives here; complete games are game templates,
+  and game-specific components live inside their template folder. (The MOENTJAGT-era reference
+  specimens — `Player`, `Coin`, power-ups, HUD counters etc. — were deleted with MOENTJAGT on
+  2026-09-01: unused code is deleted, and the templates are the reference now.)
 - **`GameTemplates/`** — whole games as template folders, tracked in git. Copied out by students,
   never edited in place. See the Game templates section below.
 - **`MyGames/`** — a student's private components and copied-in game templates, namespace `Mine`.
@@ -109,7 +112,8 @@ without pulling from git. Five concepts:
   these files. (Renamed from `MyComponents/` on 2026-08-31 — the rename must carry the
   `.gitignore` entry, the tracked README/template inside it, and every mention in `Readme.md`.)
 - **`program.cs`** — the composition. Gitignored. The only place allowed to reference everything.
-  `program.cs.template` is the committed starting point; keep the two in sync.
+  There is no root `program.cs.template` any more (it was the MOENTJAGT game, removed 2026-09-01):
+  the committed starting points are the templates' own `program.cs` files under `GameTemplates/`.
 
 The spring originals are **not** copied into this folder. If you need to see how something used to
 work, read `forår 2026/network-game/` — it is still in the repo, one directory up. Do not modify
@@ -176,7 +180,7 @@ with a hole" to "own game from scratch". Complete games must therefore never mig
 
 - **Configuration is object initializers, never constructor parameters.** Every component has an
   implicit parameterless constructor and public get/set properties with sensible defaults:
-  `game.Add(new Player { Speed = 300, Color = Color.SkyBlue })`. Do not add constructors to
+  `game.Add(new Markoer { Fart = 380, Farve = Color.SkyBlue })`. Do not add constructors to
   components. Anything computed from configured values goes in `OnAdded` — including
   `Collider ??= Collider.Circle(Radius)` and `Tags.Add(...)`, which is the house pattern.
 - **Positions are `Vector3`.** Directions are unit vectors; speed and distance are separate floats.
@@ -201,16 +205,18 @@ Components never name each other's types. Five mechanisms, in the order to reach
 
 1. **Collision** — `Collider = Collider.Circle(r)` / `Collider.Box(w, h)`, engine does the
    broadphase and calls `OnCollision(other, context)`. Computed in the xy-plane; z is ignored.
-2. **Capability interfaces** — `ICollectable`, `IDamageable`, `IHarmful`, `IPushable`, plus `Tags`
-   and `context.FindByTag`. This is what lets a private component in `Mine` interact with a shared
-   one. `Player` only ever asks "can this be picked up / does this hurt", never "is this a Coin".
+2. **Tags** — `Tags.Add("bold")`, `other.HasTag("bold")`, `context.FindByTag`. The way to ask
+   *what* you collided with without naming a type. (The capability interfaces `ICollectable`/
+   `IDamageable`/`IHarmful`/`IPushable` were deleted by the user on 2026-09-01 — after the
+   MOENTJAGT cleanup nothing consumed them, and they "smelled of one specific game, not general
+   engine features". Do not reintroduce them without asking.)
 3. **Typed event bus** — `context.On<T>(handler)` (auto-unsubscribes when the component is removed)
    and `context.Publish(...)`. Engine events: `GameStarted`, `GameOver`, `GameWon`, `Collected`,
    `Damaged`, `Healed`, `Died`, `ScoreChanged`, `PlayerJoined`, `PlayerLeft`.
 4. **Timers** — `context.After(s, action)`, `context.Every(s, action)`. Owned by the component that
    created them: cancelled on removal, and paused while a blocking component is up unless the owner
    sets `RunsWhileBlocked`.
-5. **Shared state** — `context.State.Add("score", 10)` / `Number` / `Flag` / `Text`. `Score` is only
+5. **Shared state** — `context.State.Add("score", 10)` / `Number` / `Flag` / `Text`. A HUD is only
    a display of a state key. Numbers, flags and text replicate to clients; `Set<T>` does not.
 
 No transform hierarchy, deliberately.
@@ -235,8 +241,8 @@ entity snapshots at `NetworkRate` (20 Hz).
   run locally.
 - A client must not `Remove` a server-controlled component; the server will keep sending state for
   an id the client no longer has, and it never comes back.
-- Purely decorative networked-looking things should return `null` from `NetworkKind` so each machine
-  makes its own (see `FallingCoin`).
+- Purely decorative networked-looking things (confetti, particles) should return `null` from
+  `NetworkKind` so each machine makes its own.
 
 `Network protocol.md` defines the message contracts and must be updated whenever a message is added
 or changed. Protocol rules: UTF-8, one message per line terminated by `\n`, `;` separator, ALL CAPS
@@ -293,8 +299,9 @@ and **their own player name** (presets via `Password`/`PlayerName` skip the matc
 debug view; P toggles the player box.
 
 **On a fresh checkout there is no `program.cs`** — it is gitignored on purpose. Copy
-`program.cs.template` to `program.cs` before the first `dotnet run`, or the build fails with no
-entry point. Same for `MyGames/` (only its README and template are tracked) and `Assets/mine/`.
+a template's `program.cs` (e.g. `GameTemplates/Hoppebolde/program.cs`) to the root as `program.cs`
+before the first `dotnet run`, or the build fails with no entry point. Same for `MyGames/` (only
+its README and template are tracked) and `Assets/mine/`.
 
 **Verifying visually on this machine:** GDI screen capture (`CopyFromScreen`) returns a blank white
 rectangle for the raylib window — it cannot read the accelerated surface, and this is true for raw
@@ -389,6 +396,16 @@ exactly 1 row with the loopback address); and client stutter is fixed with snaps
 + TCP `NoDelay` — measured by counting frames where a ball moved on a client: 40/119 before
 (≈20 Hz stepping), 119/119 after. See "Network mode and discovery" for the design notes.
 
+### MOENTJAGT removed (2026-09-01)
+
+User decision: MOENTJAGT (`program.cs.template`) is deleted, along with the components only it
+used and the ones nothing used — 15 files. `Components/` now holds exactly `StaticText`,
+`StartScreen`, `Light`, `SoundEffects`. Readme (Kom i gang, catalog, spring-conversion table),
+protocol examples, engine XML-doc examples, `.gitignore`'s `highscore.txt` line and both
+templates' comments were swept for references. The capability interfaces were deleted by the
+user right after (no shipped consumer, and too game-specific — see Interaction model); the
+engine events stay, with `SoundEffects` as their consumer.
+
 ### The Pong case (2026-08-29/31)
 
 A one-player Pong, built to find engine gaps. It ships as the first game template:
@@ -427,8 +444,8 @@ at 3000 (112 ms/frame). The template game has ~30. Not a problem; noted so nobod
   guards against it yet.
 - `Lighting.Apply` looks uniform locations up by name on every call. Fine for a handful of shaded
   draws per frame; cache per shader id if someone shades hundreds of things.
-- The template's `CoinSpawner` has no cap; left running for an hour it reaches the collider count
-  where frames get slow.
+- Hoppebolde has no cap on balls; enough Enter-mashing eventually reaches the collider count
+  where frames get slow (~2000 measured).
 
 ### Ideas not built, roughly by value
 

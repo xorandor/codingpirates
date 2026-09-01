@@ -8,7 +8,7 @@ namespace Kraken;
 ///   int point = context.State.Number("score");
 ///   context.State.SetFlag("gameover", true);
 ///
-/// Score-komponenten viser bare det tal der ligger under "score".
+/// En komponent der viser point, laeser bare tallet under "score".
 /// </summary>
 public class GameState
 {

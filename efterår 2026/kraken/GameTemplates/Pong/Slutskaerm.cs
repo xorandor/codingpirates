@@ -6,7 +6,7 @@ namespace Mine;
 
 /// <summary>
 /// Holder oeje med begge pointtal og stopper spillet naar en af siderne naar maalet.
-/// Enter starter forfra. Erstatter WinCondition/GameOverScreen, som kun kender eet tal.
+/// Enter starter forfra. Bygget til Pong, fordi den skal kende BEGGE pointtal.
 /// </summary>
 public class Slutskaerm : Component
 {

@@ -22,7 +22,7 @@ Ret ALDRIG i skabelonen her i mappen - kopier den ud, og rod saa alt det du vil.
 - Boldenes fart og stoerrelse - eller lad dem blive STOERRE for hvert hop.
 - Giv boldene lyd naar de rammer en kant (`Assets.Tone` i `HoppeBold`).
 - Lad boldene forsvinde efter 10 sekunder (`context.After` i `OnAdded`).
-- Lad markoererne skubbe til boldene naar de roerer dem (`OnCollision` + `IPushable`).
+- Lad markoererne skubbe til boldene naar de roerer dem (`OnCollision` + giv bolden en ny retning).
 - Saet en kode paa dit spil naar du starter som vaert - og se laasen i spillelisten.
-- En taeller oeverst: hvor mange bolde er der i luften? (`TagCounter` med `Tag = "hoppebold"`.)
+- En taeller oeverst: hvor mange bolde er der i luften? (En `StaticText` du selv opdaterer med `context.Find<HoppeBold>().Count()`.)
 - Det vilde: goer det til et spil. Foerst til 10 bolde? Undgaa boldene? Du bestemmer.

@@ -8,7 +8,7 @@ namespace Kraken;
 /// Selve motoren. Bygges i program.cs, fyldes med komponenter, og saettes i gang med Run().
 ///
 ///   var game = new GameEngine { Title = "Mit spil", Background = Color.RayWhite };
-///   game.Add(new Player { Speed = 250 });
+///   game.Add(new StaticText { Text = "Mit spil" });
 ///   game.Run();
 ///
 /// Verden er 3D, men kameraet staar som standard og kigger lige ind i xy-planet.

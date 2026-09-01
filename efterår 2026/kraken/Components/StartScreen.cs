@@ -8,7 +8,7 @@ namespace Components;
 /// <summary>
 /// En startskaerm der ligger hen over spillet, indtil man trykker Enter eller mellemrum.
 ///
-///   game.Add(new StartScreen { Title = "MOENTJAGT" });
+///   game.Add(new StartScreen { Title = "PONG" });
 ///
 /// Mens den er fremme er alt andet sat paa pause (IsBlocking). Verden bliver stadig tegnet,
 /// den staar bare stille. Naar man trykker, sender den beskeden GameStarted ud.

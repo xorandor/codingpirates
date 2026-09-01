@@ -52,7 +52,7 @@ aldrig fremad: udebliver beskederne, staar tingene stille.
 |---|---|---|
 | `WELCOME` | `WELCOME` | Du er med. Sendes som svar paa en godkendt `JOINED` - ogsaa naar spillet ingen kode har, saa klienten altid ved hvor den staar. Klienten venter op til 3 sekunder paa den. |
 | `DENIED` | `DENIED;<grund>` | Du kom ikke med (fx `forkert kode`). Serveren lukker forbindelsen bagefter, og klienten registreres aldrig. |
-| `SPAWN` | `SPAWN;<id>;<kind>` | Der er kommet en ny ting i spillet. `kind` er komponentens `NetworkKind`, fx `moent`. |
+| `SPAWN` | `SPAWN;<id>;<kind>` | Der er kommet en ny ting i spillet. `kind` er komponentens `NetworkKind`, fx `hoppebold`. |
 | `STATE` | `STATE;<id>;<x>;<y>;<z>[;<ekstra>...]` | Sådan ser tingen ud nu. x/y/z er Position. Felterne efter er det komponenten selv skrev i `WriteState`. Sendes 20 gange i sekundet. |
 | `DESPAWN` | `DESPAWN;<id>` | Tingen findes ikke laengere - fjern den. |
 | `YOUARE` | `YOUARE;<id>` | Den ting er din figur. Klienten kan finde den igen som `context.MyEntity`. |

@@ -4,7 +4,7 @@ namespace Kraken;
 /// Ting der skal ske senere, uden at du selv skal holde styr paa en float.
 ///
 ///   context.After(2f, () =&gt; context.Remove(this));            // om 2 sekunder
-///   context.Every(0.5f, () =&gt; context.Add(new Coin()));        // hvert halve sekund
+///   context.Every(0.5f, () =&gt; context.Add(new HoppeBold()));    // hvert halve sekund
 ///
 /// Every giver dig et handle tilbage, som du kan stoppe igen:
 ///   var spawner = context.Every(1f, Spawn);

@@ -93,37 +93,3 @@ public abstract class Component
     public virtual void RenderUI() { }
     public virtual void OnRemoved(GameContext context) { }
 }
-
-// -----------------------------------------------------------------------------
-// De faelles evner. En komponent der kan samles op, tage skade eller goere skade,
-// implementerer et af disse interfaces. Saa kan andre komponenter bruge den uden
-// nogensinde at kende dens rigtige type - og uden at filerne skal ligge samme sted.
-// -----------------------------------------------------------------------------
-
-/// <summary>Noget der kan samles op, fx en moent eller en power-up.</summary>
-public interface ICollectable
-{
-    /// <summary>Hvor mange point det er vaerd. 0 hvis det ikke giver point.</summary>
-    int Value { get; }
-
-    /// <summary>Kaldes af motoren naar nogen samler den op. Her fjerner du typisk dig selv.</summary>
-    void OnCollected(Component collector, GameContext context);
-}
-
-/// <summary>Noget der kan tage skade, fx en spiller eller en fjende.</summary>
-public interface IDamageable
-{
-    void TakeDamage(int amount, Component source, GameContext context);
-}
-
-/// <summary>Noget der goer skade paa det, det rammer, fx en kugle eller en pigget bold.</summary>
-public interface IHarmful
-{
-    int Damage { get; }
-}
-
-/// <summary>Noget der kan skubbes vaek, fx en kugle man afvaerger.</summary>
-public interface IPushable
-{
-    void PushAwayFrom(Vector3 source);
-}

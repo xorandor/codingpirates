@@ -5,7 +5,8 @@ Spilmotoren vi bygger videre paa i efteraaret 2026.
 ## Kom i gang
 
 1. Hent koden.
-2. Kopier `program.cs.template` til `program.cs`.
+2. Kopier en skabelons `program.cs` op i roden - fx fra `GameTemplates/Pong/` eller
+   `GameTemplates/Hoppebolde/` (se "Hvad er dit, og hvad er faelles" laengere nede).
 3. Skriv `dotnet run`.
 
 Det er det. `program.cs` er din fil - den kommer aldrig i git, saa du kan lave lige praecis
@@ -117,11 +118,11 @@ Billeder og lyde maa **foerst** loades i `OnAdded` - foer da er vinduet der ikke
 
 ---
 
-## De fire maader komponenter snakker sammen paa
+## De tre maader komponenter snakker sammen paa
 
 Det her er hjertet i Kraken. En komponent maa **aldrig** kende en anden komponents type.
-Skriver du `if (other is Coin)`, saa kan din komponent ikke bruges i et spil uden mønter -
-og dine egne komponenter i `MyGames/` kan ikke vaere med.
+Skriver du `if (other is Bold)`, saa kan din komponent kun bruges i spil der har lige
+praecis den klasse - og dine egne komponenter i `MyGames/` kan ikke vaere med.
 
 ### 1. Kollision
 
@@ -133,40 +134,15 @@ public override void OnAdded(GameContext context) => Collider = Collider.Box(40,
 
 public override void OnCollision(Component other, GameContext context)
 {
-    Console.WriteLine($"Jeg ramte noget!");
+    if (other.HasTag("bold"))
+        Console.WriteLine("Jeg blev ramt af en bold!");
 }
 ```
 
-Kollision regnes ud i xy-planet - z bliver ignoreret.
+Kollision regnes ud i xy-planet - z bliver ignoreret. Vil du vide *hvad* du ramte, saa
+spoerg paa maerkatet (`HasTag`) - aldrig paa typen.
 
-### 2. Evner (interfaces)
-
-I stedet for at spoerge "er du en mønt?" spoerger man "kan du samles op?".
-
-| Interface | Betyder | Du skal skrive |
-|---|---|---|
-| `ICollectable` | jeg kan samles op | `Value` og `OnCollected(...)` |
-| `IDamageable` | jeg kan tage skade | `TakeDamage(...)` |
-| `IHarmful` | jeg goer skade | `Damage` |
-| `IPushable` | jeg kan skubbes vaek | `PushAwayFrom(...)` |
-
-```csharp
-public class Diamant : Component, ICollectable
-{
-    public int Value { get; set; } = 100;
-
-    public void OnCollected(Component collector, GameContext context)
-    {
-        context.State.Add("score", Value);
-        context.Remove(this);
-    }
-}
-```
-
-`Player` samler den op med det samme - uden at nogen har rettet en linje i `Player.cs`.
-**Det er hele pointen.**
-
-### 3. Beskeder
+### 2. Beskeder
 
 Naar noget skal vide besked, men ikke skal roere ved dig.
 
@@ -187,7 +163,7 @@ Du maa gerne lave dine egne - en `record` i din egen fil er nok:
 public record BossVaagnede(Vector3 Hvor);
 ```
 
-### 4. Faelles hukommelse og maerkater
+### 3. Faelles hukommelse og maerkater
 
 ```csharp
 context.State.Add("score", 10);            // laeg 10 point til
@@ -198,8 +174,8 @@ foreach (var fjende in context.FindByTag("fjende"))
     context.Remove(fjende);
 ```
 
-`Score`-komponenten viser bare det tal der ligger under `"score"`. Derfor kan enhver
-komponent give point uden foerst at lede efter den.
+En komponent der viser point, laeser bare tallet under `"score"`. Derfor kan enhver
+komponent give point uden foerst at lede efter den der viser dem.
 
 ### Og saa: timere
 
@@ -255,7 +231,7 @@ Slaar du `Perspective` til, stiller kameraet sig af sig selv saa alt i z = 0 er 
 stort som foer. Ting med z under 0 bliver mindre (en stjernehimmel), ting med z over 0 stoerre.
 Vil du selv bestemme afstanden, saa saet `game.Camera.Distance`.
 
-Skal kameraet foelge en figur, saa brug komponenten `CameraFollow`.
+Skal kameraet foelge en figur, saa flyt `context.Camera.Target` med i figurens `Update`.
 
 ---
 
@@ -372,8 +348,8 @@ Serveren bestemmer alt. Klienten sender kun sine tastetryk og tegner det den faa
 2. Fortael klienten hvad den skal lave, naar den hoerer det navn:
 
 ```csharp
-game.NetworkKinds.Register("moent", () => new Coin());
-game.NetworkKinds.Register("spiller", () => new Player());
+game.NetworkKinds.Register("markoer", () => new Markoer());
+game.NetworkKinds.Register("hoppebold", () => new HoppeBold());
 ```
 
 3. Skal der mere end Position med over, saa skriv det ned:
@@ -396,7 +372,8 @@ public override void ReadState(StateReader state)
 tegner den en graa kasse med navnet paa - saa kan man stadig spille med. Det er derfor du
 og din sidemand godt kan have hver jeres version af spillet og alligevel spille sammen.
 
-Vil du give hver spiller sin egen figur, saa brug `NetworkPlayers`. Se
+Vil du give hver spiller sin egen figur, saa lyt paa `PlayerJoined`/`PlayerLeft` -
+`MarkoerPerSpiller` i `GameTemplates/Hoppebolde/` viser praecis hvordan. Se
 `Network protocol.md` for alle beskederne.
 
 ---
@@ -410,105 +387,10 @@ game.Add(new StaticText { Text = "Mit spil", ScreenPosition = new(20, 20), FontS
 game.Add(new StaticText { Text = "MIDT", ScreenPosition = new(640, 360), Centered = true });
 ```
 
-### FloatingText
-Tekst der flyver rundt og hopper paa kanterne.
-```csharp
-game.Add(new FloatingText { Text = "Saa er vi i gang!", AngleDegrees = 30, Speed = 200 });
-```
-
-### Score
-Viser et tal fra `context.State`.
-```csharp
-game.Add(new Score());
-game.Add(new Score { Key = "liv", Label = "Liv", ScreenPosition = new(20, 80) });
-```
-
-### HighScore
-Husker det hojeste pointtal - ogsaa efter at spillet er lukket. Ligger i en tekstfil.
-```csharp
-game.Add(new HighScore());
-game.Add(new HighScore { FileName = "banerekord.txt", Label = "Banerekord" });
-```
-
-### TagCounter
-Taeller hvor mange ting der har et bestemt maerkat. *(Erstatter foraarets `CoinCounter`
-og `CircleShooterBallCounter`.)*
-```csharp
-game.Add(new TagCounter { Tag = "moent", Label = "Monter tilbage" });
-game.Add(new TagCounter { Tag = "fjende", Label = "Fjender", ScreenPosition = new(20, 120) });
-```
-
-### Player
-En spiller. Mellemrum skubber, venstre shift dasher.
-```csharp
-game.Add(new Player { Speed = 300, Color = Color.Blue, Name = "Mig" });
-game.Add(new Player { Sprite = "helt.png", Size = 60, MaxLives = 5, PushRadius = 0 });
-```
-Samler alt op der er `ICollectable`, tager skade af alt der er `IHarmful`, og skubber alt
-der er `IPushable`.
-
-### ArrowKeyControlledBall
-Den simplest mulige figur. God at kigge paa naar man vil se hvor lidt der skal til.
-```csharp
-game.Add(new ArrowKeyControlledBall { Speed = 300, Color = Color.Lime });
-```
-
-### Coin
-En moent der kan samles op.
-```csharp
-game.Add(new Coin { Position = new(120, 80, 0), Value = 10 });
-game.Add(new Coin { Position = new(-200, 0, 0), Radius = 25, Sprite = "coin.png" });
-```
-
-### FallingCoin
-En moent der falder ned og forsvinder. God til konfetti.
-```csharp
-game.Add(new FallingCoin { Position = new(0, 400, 0), Speed = 250, Collectable = true });
-```
-
-### CircleShooter
-En kanon der drejer og skyder. Kuglerne goer skade og kan skubbes vaek.
-```csharp
-game.Add(new CircleShooter { Position = new(0, 0, 0), AutoShootEverySeconds = 1f });
-game.Add(new CircleShooter { ShootKey = KeyboardKey.Space, MaxBounces = 3, BulletSpeed = 500 });
-```
-
-### PowerBuffExtraHealth
-Et hjerte der giver et ekstra liv.
-```csharp
-game.Add(new PowerBuffExtraHealth { Position = new(200, -100, 0), Lives = 2 });
-```
-
-### PowerBuffCoinMagnet
-En magnet der traekker monter til sig i et stykke tid.
-```csharp
-game.Add(new PowerBuffCoinMagnet { Position = new(-150, 100, 0), Duration = 8f });
-```
-
 ### StartScreen
 Startskaerm der blokerer indtil man trykker Enter. Sender `GameStarted` ud.
 ```csharp
-game.Add(new StartScreen { Title = "MOENTJAGT" });
-```
-
-### GameOverScreen
-Kommer frem af sig selv naar nogen sender `GameOver` ud.
-```csharp
-game.Add(new GameOverScreen());
-game.Add(new GameOverScreen { Message = "AV!", RestartsGame = false });
-```
-
-### WinCondition
-Erklaerer spillet vundet naar pointtallet er hojt nok, og lader det regne med monter.
-```csharp
-game.Add(new WinCondition { ScoreToWin = 100 });
-```
-
-### CameraFollow
-Lader kameraet foelge din figur, saa banen kan vaere storre end skaermen.
-```csharp
-game.Add(new CameraFollow());
-game.Add(new CameraFollow { Tag = "bil", Smoothing = 2f, FollowY = false });
+game.Add(new StartScreen { Title = "PONG", Subtitle = "Tryk Enter for at starte" });
 ```
 
 ### Light
@@ -527,12 +409,8 @@ game.Add(new SoundEffects());
 game.Add(new SoundEffects { Collected = "min-plink.wav", Damaged = "" });   // egen fil / slaaet fra
 ```
 
-### NetworkPlayers
-Giver hver spiller der forbinder sig deres egen figur. Koerer kun paa serveren.
-```csharp
-game.Add(new NetworkPlayers());
-game.Add(new NetworkPlayers { CreatePlayer = () => new Player { Speed = 400, MaxLives = 5 } });
-```
+Kataloget er med vilje lille - det er skabelonerne i `GameTemplates/` der viser hele spil,
+og resten bygger du selv i `MyGames/`.
 
 ---
 
@@ -579,7 +457,7 @@ Se `MyGames/README.md` for hvordan du kommer i gang med din foerste egen kompone
 | `y` peger nedad | `y` peger **opad** |
 | `(0,0)` oeverst til venstre | `(0,0,0)` midt paa skaermen |
 | `IComponent` | `Component` (en klasse - arv fra den) |
-| `new Player(pos, 200, 20, Color.Blue, ...)` | `new Player { Speed = 200, Color = Color.Blue }` |
+| `new Player(pos, 200, 20, Color.Blue, ...)` | egenskaber, ikke konstruktorer: `new Markoer { Fart = 200 }` |
 | `UpdateContext` | `GameContext` |
 | `context.AddComponent(x)` | `context.Add(x)` |
 | `context.GetComponents<T>()` | `context.Find<T>()` |
@@ -587,7 +465,6 @@ Se `MyGames/README.md` for hvordan du kommer i gang med din foerste egen kompone
 | afstandstjek i hver komponent | `Collider` + `OnCollision` |
 | `event EventHandler<Coin>` | `context.On<T>()` / `context.Publish(...)` |
 | `score.Points += 10` | `context.State.Add("score", 10)` |
-| `CoinCounter`, `CircleShooterBallCounter` | `TagCounter` |
-| `ManualScoreCounter` | `Score` med sin egen `Key` |
-| `NetworkBallManager` | `NetworkPlayers` |
+| `CoinCounter`, `ManualScoreCounter` | laes tallet i `context.State` og tegn det selv |
+| `NetworkBallManager` | lyt paa `PlayerJoined`/`PlayerLeft` (se Hoppebolde) |
 | klienten flyttede sig selv | serveren bestemmer, klienten foelger med |
