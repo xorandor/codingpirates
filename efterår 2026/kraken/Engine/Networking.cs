@@ -35,10 +35,18 @@ public class Networking
     /// <summary>Skriver hver eneste besked ud i konsollen. God at slaa til naar noget driller.</summary>
     public bool LogMessages { get; set; }
 
+    /// <summary>
+    /// Koden en klient skal sende med i JOINED for at komme med. Tom = aabent spil.
+    /// Saettes af motoren foer Start(). Koden er adresse, ikke sikkerhed - den gaar i klartekst.
+    /// </summary>
+    public string Password { get; set; } = "";
+
     public Networking()
     {
         LocalIp = FindLanIpAddress();
-        _listener = new TcpListener(LocalIp, Port);
+        // Lyt paa alle adresser: klienter forbinder til den adresse discovery-svaret kom fra,
+        // og paa een maskine er det loopback - ikke LAN-adressen.
+        _listener = new TcpListener(IPAddress.Any, Port);
     }
 
     private static IPAddress FindLanIpAddress()
@@ -81,6 +89,9 @@ public class Networking
             try
             {
                 var client = await _listener.AcceptTcpClientAsync();
+                // Uden NoDelay samler Windows de smaa beskeder i bunker (Nagle) - det giver
+                // hak i bevaegelserne, for STATE kommer saa i klumper i stedet for jaevnt.
+                client.NoDelay = true;
                 _ = Task.Run(() => HandleClientAsync(client));
             }
             catch
@@ -117,7 +128,20 @@ public class Networking
         if (parts.Length == 0) return;
 
         if (parts[0] == "JOINED" && parts.Length >= 2)
+        {
+            // Kode-tjekket bor her, ikke i spillogikken: en afvist klient bliver aldrig
+            // registreret og udloeser hverken PlayerJoined eller noget andet.
+            string kode = parts.Length >= 3 ? parts[2] : "";
+            if (Password.Length > 0 && kode != Password)
+            {
+                SendTo(client, Format("DENIED", ["forkert kode"]));
+                try { client.Close(); } catch { /* allerede vaek */ }
+                return;
+            }
+
             _players[client] = parts[1];
+            SendTo(client, Format("WELCOME", []));
+        }
 
         _players.TryGetValue(client, out string? sender);
         Enqueue(new NetworkMessage(parts[0], parts[1..], sender ?? ""));
@@ -158,7 +182,7 @@ public class Networking
     {
         try
         {
-            _client = new TcpClient();
+            _client = new TcpClient { NoDelay = true };
             if (!_client.ConnectAsync(ip, Port).Wait(TimeSpan.FromSeconds(3)))
             {
                 _client.Close();
@@ -177,7 +201,7 @@ public class Networking
         }
     }
 
-    public void SendJoined(string playerName) => SendMessageToServer("JOINED", playerName);
+    public void SendJoined(string playerName, string kode = "") => SendMessageToServer("JOINED", playerName, kode);
 
     public void StartListening()
     {
@@ -216,13 +240,13 @@ public class Networking
 
     // ---------------------------------------------------------------- Beskeder
 
-    private static string Format(string messageType, string[] fields)
+    internal static string Format(string messageType, string[] fields)
         => fields.Length > 0
             ? $"{messageType};{string.Join(';', fields.Select(Sanitise))}\n"
             : $"{messageType}\n";
 
     /// <summary>Semikolon og linjeskift ville oedelaegge formatet, saa de bliver til underscore.</summary>
-    private static string Sanitise(string field)
+    internal static string Sanitise(string field)
         => field.Replace(';', '_').Replace('\n', '_').Replace('\r', '_');
 
     private void Enqueue(NetworkMessage message)

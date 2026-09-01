@@ -2,9 +2,9 @@
 // Kopier denne fil til 'program.cs' og begynd at bygge dit spil.
 // program.cs er DIN fil. Den kommer aldrig i git, saa du kan lave lige hvad du vil.
 //
-// Kor spillet:       dotnet run
-// Kor som klient:    dotnet run -- klient
+// Kor spillet:       dotnet run   (spillet sporger selv om du vil vaere vaert eller vaere med)
 // 3D-visning:        F3 mens spillet koerer
+// Spillerliste:      P viser og skjuler den
 // -----------------------------------------------------------------------------
 
 using Components;
@@ -18,11 +18,15 @@ var game = new GameEngine
     Width = 1280,
     Height = 720,
     Background = Color.RayWhite,
-    Mode = args.Contains("klient") ? GameMode.Client : GameMode.Server,
+    Network = true,   // spillet kan spilles sammen over netvaerket
 
-    // Du kan springe de to spoergeskaerme over:  dotnet run -- klient 192.168.1.25 Anna
-    ServerIp = args.Length > 1 ? args[1] : "",
-    PlayerName = args.Length > 2 ? args[2] : ""
+    // Linjerne herunder er KUN til test - de springer alle skaermene over:
+    //   dotnet run -- vaert [kode]                 (start direkte som vaert)
+    //   dotnet run -- klient 127.0.0.1 Anna [kode] (forbind direkte, uden soegning)
+    Mode = args.Contains("klient") ? GameMode.Client : args.Contains("vaert") ? GameMode.Server : null,
+    ServerIp = args.Contains("klient") && args.Length > 1 ? args[1] : "",
+    PlayerName = args.Length > 2 ? args[2] : "",
+    Password = args.Contains("klient") ? (args.Length > 3 ? args[3] : "") : (args.Contains("vaert") && args.Length > 1 ? args[1] : "")
 };
 
 // Kameraet: y peger opad, og (0,0,0) er midt paa skaermen.
@@ -57,41 +61,40 @@ game.Add(new Light());
 game.Add(new SoundEffects());
 
 // -----------------------------------------------------------------------------
-// Selve spillet. Alt herunder bliver kun lavet paa serveren - klienten faar det
-// tilsendt. Prov at slette 'if' og se hvad der sker naar du starter som klient.
+// Selve spillet. Paa en klient bliver alt med et NetworkKind droppet af motoren -
+// serveren ejer det og sender det over. Saa det her kan staa her uden videre.
 // -----------------------------------------------------------------------------
-if (game.Mode == GameMode.Server)
+// En figur til hver spiller der forbinder sig - og en til dig selv.
+game.Add(new NetworkPlayers
 {
-    // En figur til hver spiller der forbinder sig - og en til dig selv.
-    game.Add(new NetworkPlayers
+    HostName = "Mig",
+    CreatePlayer = () => new Player { Speed = 320, MaxLives = 3 }
+});
+
+game.Add(new CircleShooter
+{
+    Position = new(0, 0, 0),
+    AutoShootEverySeconds = 1.2f,
+    MaxBounces = 4,
+    BulletSpeed = 260
+});
+
+for (int i = 0; i < 12; i++)
+{
+    game.Add(new Coin
     {
-        HostName = "Mig",
-        CreatePlayer = () => new Player { Speed = 320, MaxLives = 3 }
+        Position = new(Random.Shared.Next(-550, 550), Random.Shared.Next(-300, 300), 0),
+        Value = 10
     });
-
-    game.Add(new CircleShooter
-    {
-        Position = new(0, 0, 0),
-        AutoShootEverySeconds = 1.2f,
-        MaxBounces = 4,
-        BulletSpeed = 260
-    });
-
-    for (int i = 0; i < 12; i++)
-    {
-        game.Add(new Coin
-        {
-            Position = new(Random.Shared.Next(-550, 550), Random.Shared.Next(-300, 300), 0),
-            Value = 10
-        });
-    }
-
-    game.Add(new PowerBuffExtraHealth { Position = new(-450, 250, 0) });
-    game.Add(new PowerBuffCoinMagnet { Position = new(450, -250, 0), Duration = 8f });
-
-    // Kom med en ny moent hvert andet sekund, saa banen aldrig loeber tor.
-    game.Add(new CoinSpawner());
 }
+
+game.Add(new PowerBuffExtraHealth { Position = new(-450, 250, 0) });
+game.Add(new PowerBuffCoinMagnet { Position = new(450, -250, 0), Duration = 8f });
+
+// Kom med en ny moent hvert andet sekund, saa banen aldrig loeber tor.
+game.Add(new CoinSpawner());
+
+// game.Password = "blaa-banan";   // fast kode paa spillet. Uden denne sporger vaert-skaermen selv.
 
 game.Run();
 
@@ -104,6 +107,8 @@ class CoinSpawner : Component
 {
     public override void OnAdded(GameContext context)
     {
+        if (!context.IsServer) return;   // kun serveren maa lave moenter
+
         context.Every(2f, () => context.Add(new Coin
         {
             Position = new Vector3(Random.Shared.Next(-550, 550), Random.Shared.Next(-300, 300), 0),

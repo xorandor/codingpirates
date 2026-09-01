@@ -30,4 +30,11 @@
     <None Remove="GameTemplates\**" />
   </ItemGroup>
 
-  </Project>
+
+  <!-- Naar en skabelon kopieres ind i MyGames/, foelger dens program.cs med. Den kopi er
+       bare en ekstra spil-start og maa ikke kompileres - rodens program.cs er spillet. -->
+  <ItemGroup>
+    <Compile Remove="MyGames\**\program.cs" />
+  </ItemGroup>
+
+</Project>

@@ -243,10 +243,54 @@ or changed. Protocol rules: UTF-8, one message per line terminated by `\n`, `;` 
 command first, receivers ignore unknown commands without crashing. Floats always use `.` via
 `CultureInfo.InvariantCulture`.
 
+### Network mode and discovery (2026-08-31)
+
+Networking is **opt-in per game**: `Network = true` on the engine. Without it the engine never
+touches the network — no listener, no discovery, no corner status, no player box. With it, startup
+shows **one start screen**: the list of discovered games with "Start dit eget spil" as the top row
+(there is no separate host/join choice screen — user decision 2026-09-01). Picking the top row
+makes you host, and an interactive host is then asked for the game's name, an optional password,
+and **their own player name** (presets via `Password`/`PlayerName` skip the matching prompt).
+`Mode` is a *nullable pre-choice* for tests only; the resolved role lives in the internal
+`ActiveMode`, and the client-side "drop components with a NetworkKind" check moved from `Add` to
+`FlushPendingChanges` because the role is unknown at composition time.
+
+- **No IP is ever shown or typed.** Clients find games via UDP discovery (port 12346,
+  `DISCOVER` broadcast+loopback → unicast `GAME;titel;vaert;tcpPort;antal;laas`), pick from a
+  list, and the sender address of the reply is used to connect. `Engine/Discovery.cs` holds both
+  the responder and the client collector. The TCP listener binds `IPAddress.Any` — it used to bind
+  the LAN address only, which made loopback clients impossible.
+- **Password handshake lives in `Networking`**, not game logic: `JOINED;<navn>;<kode>` is answered
+  with `WELCOME` (always sent, so the client's 3 s wait is deterministic) or `DENIED;<grund>` +
+  close; a denied client is never registered and triggers no events.
+- `INPUT` is **7 characters** now — Enter travels as the seventh button (`Input.Enter`).
+- The roster replicates through shared state under the reserved key `*spillere` (set in
+  `ServerTick`, only on change); the P-toggled player box reads it on clients and
+  `PlayerRoster()` on the server. **The roster includes the host** (host's `PlayerName` first,
+  then `ConnectedPlayers`) — `GameContext.MyName` is therefore set on hosts too, and
+  Hoppebolde's `MarkoerPerSpiller` names the host marker from it.
+- **Discovery dedup:** the same server answers both the broadcast and the loopback copy of
+  `DISCOVER`, so `DiscoveryClient` keys found games by `vaert:tcpPort`, not sender address —
+  and keeps the loopback address when it has one (always reachable on the same machine).
+- **Client movement is snapshot-interpolated** (`Bane` in `Engine/Replication.cs`): the client
+  renders `2/Rate` (~0.1 s) in the past and lerps between the two buffered snapshots that
+  bracket that moment; never extrapolates (missing packets = stand still, no overshoot on
+  bounces). A short queue (10 snapshots) is required — with only two stored points the render
+  time falls before both and everything clamps back to 20 Hz stepping (measured: 40/119 frames
+  moved; with the queue 119/119). Both TCP ends also set `NoDelay` — Nagle otherwise bunches
+  the small 20 Hz STATE packets into visible stutter. Rejected alternatives: client-side
+  prediction + reconciliation (far too complex for the audience), extrapolation/dead reckoning
+  (overshoots on every bounce), higher send rate (more bandwidth, still steps).
+- Test bypasses (never student-facing): `dotnet run -- klient <ip> <navn> [kode]` skips every
+  screen; `dotnet run -- vaert [kode]` starts hosting without prompts. The discovery *screen*
+  itself needs a human hand (synthetic keys never reach raylib); the protocol under it is testable
+  with a UDP/TCP probe — see the Hoppebolde case in Status.
+
 ## Development setup
 
-`dotnet run` from this folder. `dotnet run -- klient <ip> <navn>` starts in client mode and skips the
-prompts. F3 toggles the 3D debug view.
+`dotnet run` from this folder. Test bypasses for network games (skip every screen):
+`dotnet run -- klient <ip> <navn> [kode]` and `dotnet run -- vaert [kode]`. F3 toggles the 3D
+debug view; P toggles the player box.
 
 **On a fresh checkout there is no `program.cs`** — it is gitignored on purpose. Copy
 `program.cs.template` to `program.cs` before the first `dotnet run`, or the build fails with no
@@ -315,6 +359,35 @@ original plan is done, and a second game (Pong) has been built on it to find wha
   while everything it did know rendered normally.
 - Collision → `ICollectable` → score, `IHarmful` → damage, `Healed` → lives, and `GAMESTATE`
   replication (client showed the server's score) all confirmed by instrumented test runs.
+
+### The Hoppebolde case (2026-08-31)
+
+`GameTemplates/Hoppebolde/` is the second template and the network test game: every player steers
+a marker (arrows), Enter fires a bouncing ball, the server owns the balls, all clients see the
+same ones. Built to exercise the discovery/password/Network-mode work. Verified on one machine:
+
+- Server + two bypass clients (Anna, Bo): each injected an Enter press by sending the raw
+  `INPUT;0000001` line (keyboard cannot be scripted); the server spawned exactly one ball per
+  client. At a server-broadcast trace signal all three processes reported **identical ball sets**
+  (same radii, positions within 4 px — one 20 Hz snapshot) and the replicated roster `Bo, Anna`.
+  A client screenshot shows both balls, three named markers and the P box.
+- UDP probe: `DISCOVER` → `GAME;HOPPEBOLDE;<maskine>;12345;0;1` with a password set.
+- TCP probe: wrong code → `DENIED;forkert kode`; right code → `WELCOME`.
+- End to end with password: a client passing the right code joined and synced; one with a wrong
+  code never entered the game and never appeared in the roster.
+- Found and fixed on the way: the TCP listener bound the LAN address only (loopback clients could
+  not connect), and the roster had to be change-detected or it broadcast 20×/s.
+- Not scriptable, press by hand once: the start screen (game list + "Start dit eget spil" on top,
+  arrow keys + Enter) and the host name/kode/player-name prompts. The protocol under them is what
+  the probes covered.
+
+**Review round (2026-09-01)** — five user findings, all fixed and re-verified the same way:
+the separate role screen is gone (merged into the start screen, top row hosts); the host is asked
+for a player name and appears first in the roster (`spillere='Hans, Anna, Bo'` measured);
+discovery no longer lists the same server twice (keyed by `vaert:tcpPort`, sniff probe returned
+exactly 1 row with the loopback address); and client stutter is fixed with snapshot interpolation
++ TCP `NoDelay` — measured by counting frames where a ball moved on a client: 40/119 before
+(≈20 Hz stepping), 119/119 after. See "Network mode and discovery" for the design notes.
 
 ### The Pong case (2026-08-29/31)
 

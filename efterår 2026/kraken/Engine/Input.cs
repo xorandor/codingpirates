@@ -27,6 +27,9 @@ public readonly struct Input
     /// <summary>Venstre shift paa tastaturet.</summary>
     public bool B { get; init; }
 
+    /// <summary>Enter paa tastaturet.</summary>
+    public bool Enter { get; init; }
+
     /// <summary>Retningen der trykkes i, som en vektor med laengde 1. Nul hvis der ikke trykkes.</summary>
     public Vector2 Direction
     {
@@ -50,18 +53,19 @@ public readonly struct Input
         Left = IsKeyDown(KeyboardKey.Left) || IsKeyDown(KeyboardKey.A),
         Right = IsKeyDown(KeyboardKey.Right) || IsKeyDown(KeyboardKey.D),
         A = IsKeyDown(KeyboardKey.Space),
-        B = IsKeyDown(KeyboardKey.LeftShift)
+        B = IsKeyDown(KeyboardKey.LeftShift),
+        Enter = IsKeyDown(KeyboardKey.Enter)
     };
 
-    /// <summary>Pakker knapperne til seks tegn, saa de kan sendes over netvaerket.</summary>
+    /// <summary>Pakker knapperne til syv tegn, saa de kan sendes over netvaerket.</summary>
     internal string Pack() =>
-        new([Bit(Up), Bit(Down), Bit(Left), Bit(Right), Bit(A), Bit(B)]);
+        new([Bit(Up), Bit(Down), Bit(Left), Bit(Right), Bit(A), Bit(B), Bit(Enter)]);
 
     private static char Bit(bool pressed) => pressed ? '1' : '0';
 
     internal static Input Unpack(string packed)
     {
-        if (packed.Length < 6) return default;
+        if (packed.Length < 7) return default;
 
         return new Input
         {
@@ -70,7 +74,8 @@ public readonly struct Input
             Left = packed[2] == '1',
             Right = packed[3] == '1',
             A = packed[4] == '1',
-            B = packed[5] == '1'
+            B = packed[5] == '1',
+            Enter = packed[6] == '1'
         };
     }
 }

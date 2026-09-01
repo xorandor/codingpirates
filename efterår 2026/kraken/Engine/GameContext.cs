@@ -17,10 +17,10 @@ public class GameContext
     internal Component? Current { get; set; }
 
     /// <summary>Er vi server (og dermed ogsaa single player) eller klient?</summary>
-    public GameMode Mode => _engine.Mode;
+    public GameMode Mode => _engine.ActiveMode;
 
     /// <summary>True naar denne maskine bestemmer hvad der sker. Falsk paa en klient.</summary>
-    public bool IsServer => _engine.Mode == GameMode.Server;
+    public bool IsServer => _engine.ActiveMode == GameMode.Server;
 
     /// <summary>Netvaerket. Se 'Network protocol.md' for hvilke beskeder der findes.</summary>
     public Networking Networking => _engine.Networking;
@@ -46,7 +46,7 @@ public class GameContext
     /// </summary>
     public Component? MyEntity => _engine.LocalEntity;
 
-    /// <summary>Dit eget spillernavn. Tomt naar man koerer som server.</summary>
+    /// <summary>Dit eget spillernavn - ogsaa hos vaerten. Tomt i et helt lokalt spil.</summary>
     public string MyName => _engine.PlayerName;
 
     // -------------------------------------------------------------- Komponenter

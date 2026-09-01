@@ -12,17 +12,17 @@ Det er det. `program.cs` er din fil - den kommer aldrig i git, saa du kan lave l
 det spil du har lyst til.
 
 ```
-dotnet run                              # spil alene (og vaer server for andre)
-dotnet run -- klient                    # forbind til en andens server
-dotnet run -- klient 192.168.1.25 Anna  # spring spoergeskaermene over
+dotnet run     # og er spillet et netvaerksspil, sporger det selv om du vil vaere vaert
 ```
 
 | Tast | Gor |
 |---|---|
 | **F3** | 3D-visning til og fra. Proev den! |
+| **P** | Viser og skjuler listen over hvem der er med |
 | Piletaster / WASD | Bevaeg dig |
 | Mellemrum | Knap **A** (fx skub) |
 | Venstre shift | Knap **B** (fx dash) |
+| Enter | Knap **Enter** (fx skyd noget nyt ud) |
 
 ---
 
@@ -335,10 +335,34 @@ Draw.Model("bold", Position, _drejning, radius);
 
 ## Netvaerk
 
-`dotnet run` starter dig som server. Andre forbinder med `dotnet run -- klient` og skriver
-din IP-adresse - den staar oppe i hoejre hjoerne af dit vindue.
+Et spil bliver et netvaerksspil med een linje:
 
-Du behoever ikke goere noget saerligt for at spille alene. **Server er ogsaa single player.**
+```csharp
+var game = new GameEngine { Title = "Mit spil", Network = true };
+```
+
+Naar spillet starter, viser det alle de spil der er i gang paa netvaerket - og oeverst i
+listen staar "Start dit eget spil". Ingen skal taste adresser eller noget som helst.
+
+**Vil du vaere med i et spil?**
+1. Find spillet i listen (det staar med navn og hvem der er vaert) og tryk Enter.
+2. Har spillet en kode, saa tast den - vaerten kan se koden i sit eget hjoerne.
+3. Skriv dit navn. Faerdig.
+
+**Vil du vaere vaert?** Vaelg "Start dit eget spil" oeverst. Saa giver du spillet et navn,
+en kode hvis du vil have en, og dit eget navn. Vaerten spiller selv med - vaertens navn
+staar oeverst paa spillerlisten.
+
+Uden `Network = true` er spillet helt lokalt: ingen skaerme, intet netvaerk.
+
+Vil du laase dit spil fast med en kode fra koden af, saa saet `game.Password = "blaa-banan"`
+- ellers sporger vaert-skaermen selv.
+
+**Kan de andre ikke se dit spil i listen?** Foerste gang du er vaert, sporger Windows
+Firewall om lov - sig ja til baade private og offentlige netvaerk. Og alle skal vaere paa
+det samme netvaerk.
+
+Du behoever ikke goere noget saerligt for at spille alene. **Vaerten er ogsaa single player.**
 
 ### Sadan virker det
 

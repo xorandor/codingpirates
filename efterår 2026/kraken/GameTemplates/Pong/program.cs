@@ -17,8 +17,7 @@ var game = new GameEngine
     Title = "Pong",
     Width = 1280,
     Height = 720,
-    Background = Color.Black,
-    Mode = GameMode.Server
+    Background = Color.Black
 };
 
 // 1 world unit = 1 pixel. Midten er (0,0). x gaar fra -640 til 640, y fra -360 til 360.

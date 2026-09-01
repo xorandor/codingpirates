@@ -32,18 +32,26 @@ at vide. Derfor behoever klienten ikke have den samme kode som serveren - den sk
 vide hvad den skal tegne for et givet `kind`. Kender den det ikke, tegner motoren en graa
 kasse med navnet paa.
 
+Positioner kommer kun 20 gange i sekundet, men der tegnes 60. Derfor tegner klienten med
+vilje ca. 0,1 sekund bagude i tid og glider mellem de to seneste positioner der ligger paa
+hver side af det tidspunkt (det hedder *snapshot-interpolation*, og det er saadan rigtige
+multiplayer-spil goer). Lidt forsinkelse - til gengaeld bloed bevaegelse. Der gaettes
+aldrig fremad: udebliver beskederne, staar tingene stille.
+
 ## Beskeder klient → server
 
 | Kommando | Format | Betydning |
 |---|---|---|
-| `JOINED` | `JOINED;<spillernavn>` | Jeg vil vaere med. Sendes een gang lige efter forbindelsen. |
-| `INPUT` | `INPUT;<6 tegn>` | Hvilke knapper der holdes nede: op, ned, venstre, hoejre, A, B - `1` for nede, `0` for oppe. `INPUT;100010` = op + A. Sendes naar noget aendrer sig, og mindst hvert halve sekund. |
+| `JOINED` | `JOINED;<spillernavn>;<kode>` | Jeg vil vaere med. Sendes een gang lige efter forbindelsen. `kode` er tom naar spillet er aabent. Serveren svarer `WELCOME` eller `DENIED`. |
+| `INPUT` | `INPUT;<7 tegn>` | Hvilke knapper der holdes nede: op, ned, venstre, hoejre, A, B, Enter - `1` for nede, `0` for oppe. `INPUT;1000100` = op + A. Sendes naar noget aendrer sig, og mindst hvert halve sekund. |
 | `MESSAGE` | `MESSAGE;<tekst>` | Fri tekst. Bruges ikke af motoren - den er til dine egne paafund. |
 
 ## Beskeder server → klient
 
 | Kommando | Format | Betydning |
 |---|---|---|
+| `WELCOME` | `WELCOME` | Du er med. Sendes som svar paa en godkendt `JOINED` - ogsaa naar spillet ingen kode har, saa klienten altid ved hvor den staar. Klienten venter op til 3 sekunder paa den. |
+| `DENIED` | `DENIED;<grund>` | Du kom ikke med (fx `forkert kode`). Serveren lukker forbindelsen bagefter, og klienten registreres aldrig. |
 | `SPAWN` | `SPAWN;<id>;<kind>` | Der er kommet en ny ting i spillet. `kind` er komponentens `NetworkKind`, fx `moent`. |
 | `STATE` | `STATE;<id>;<x>;<y>;<z>[;<ekstra>...]` | Sådan ser tingen ud nu. x/y/z er Position. Felterne efter er det komponenten selv skrev i `WriteState`. Sendes 20 gange i sekundet. |
 | `DESPAWN` | `DESPAWN;<id>` | Tingen findes ikke laengere - fjern den. |
@@ -55,6 +63,21 @@ kasse med navnet paa.
 | Kommando | Format | Betydning |
 |---|---|---|
 | `DISCONNECTED` | `DISCONNECTED;<spillernavn>` | En klient faldt af. Laegges i koen af `Networking` og bliver aldrig sendt ud. Motoren laver den om til beskeden `PlayerLeft`. |
+
+## Soegning (UDP, port 12346)
+
+Saadan finder en klient et spil uden at nogen taster en adresse. UDP bruges KUN her - fra
+det oejeblik klienten kender serveren, foregaar alt over TCP som ovenfor. Formatet er det
+samme som TCP-beskederne, een pakke = een besked, og pakker man ikke forstaar, ignoreres.
+
+| Retning | Format | Betydning |
+|---|---|---|
+| klient → alle | `DISCOVER` | Hvem koerer et spil? Sendes til `255.255.255.255:12346` OG `127.0.0.1:12346` (loopback-kopien er den der faar vaert + klient paa samme maskine til at virke). Gentages hvert andet sekund. |
+| server → afsender | `GAME;<titel>;<vaert>;<tcpPort>;<antal spillere>;<laas>` | Mig! `titel` er spillets navn, `vaert` er maskinens navn (saa to spil med samme titel kan kendes fra hinanden), `laas` er `1` naar der skal kode til. Serverens adresse er IKKE et felt - klienten laeser den af selve pakken, og den vises aldrig for nogen. |
+
+Den samme server kan svare ad flere veje paa een gang (baade paa broadcast og paa
+loopback-kopien). Klienten kender derfor et spil paa `vaert` + `tcpPort` - ikke paa
+afsender-adressen - saa det kun staar een gang i listen.
 
 ## Tal i beskeder
 
