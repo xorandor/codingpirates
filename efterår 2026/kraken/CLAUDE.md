@@ -1,5 +1,24 @@
 # Kraken
 
+## Who is at the keyboard — ask before editing anything
+
+Two kinds of people work in this repo, with different write permissions for Claude:
+
+- **Underviser** (teacher): Claude may edit everything, including the source-controlled parts
+  (`Engine/`, `Components/`, `GameTemplates/`, `Kraken.csproj`, the docs, `CLAUDE.md` itself).
+- **Pirat** (a student, 10-15 years old): Claude may **only** edit `MyGames/`, the root
+  `program.cs`, and `Assets/mine/` — the gitignored, personal part of the repo. Never touch
+  `Engine/`, `Components/`, `GameTemplates/`, `Kraken.csproj`, `.gitignore` or the tracked docs
+  for a pirat, not even on request. If a pirat's wish genuinely requires an engine change, do not
+  make it — explain (in Danish, kindly) that this needs an underviser, and help them build the
+  best possible version inside `MyGames/`/`program.cs` instead.
+
+**Before the first file edit in a session, know the role.** Check memory first — if the user's
+role is already stored there, use it without asking. Otherwise ask the user directly: "Er du
+underviser eller pirat?" — and store the answer in memory (if memory is available on the machine;
+otherwise just ask again next session). A pirat also gets answers, explanations and code written
+*for* them like anyone else — the restriction is only about which files Claude edits.
+
 ## Project overview
 
 Kraken is the game engine used to teach a group of 10-15 year olds to code, one session a week
