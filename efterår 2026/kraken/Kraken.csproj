@@ -15,26 +15,26 @@
     <PackageReference Include="Raylib-cs" Version="7.0.2" />
   </ItemGroup>
 
+  <!-- Alt i MyGames/ ligger i namespace Mine. Med den her linje kan program.cs i roden bare
+       skrive   PongGame.Run();   uden et using foerst. -->
+  <ItemGroup>
+    <Using Include="Mine" />
+  </ItemGroup>
+
   <!-- Billeder, modeller og lyde folger med ud i bin-mappen, saa Assets.Texture() kan finde dem. -->
   <ItemGroup>
     <None Include="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- Skabelonerne er hele spil med hver deres program.cs. De er ikke en del af projektet:
-       de maa ikke kompileres (to Main-metoder), og de skjules helt for Solution Explorer,
-       saa ingen fristes til at kopiere dem DERINDE - VS-kopiering skriver linjer ind i denne
-       fil, og kopien kompilerer saa ikke. Kopier dem ud med Stifinder, terminalen eller
-       Claude. Laes dem i Stifinder, eller efter kopiering - saa ligger de i MyGames/. -->
+  <!-- Skabelonerne er hele spil, hver med sin egen XxxGame.cs (fx PongGame.Run()). De er ikke
+       en del af projektet: de kompilerer foerst naar de er kopieret ind i MyGames/, og de
+       skjules helt for Solution Explorer, saa ingen fristes til at kopiere dem DERINDE -
+       VS-kopiering skriver linjer ind i denne fil, og kopien kompilerer saa ikke. Kopier dem
+       ud med Stifinder, terminalen eller Claude. Laes dem i Stifinder, eller efter kopiering -
+       saa ligger de i MyGames/. -->
   <ItemGroup>
     <Compile Remove="GameTemplates\**" />
     <None Remove="GameTemplates\**" />
-  </ItemGroup>
-
-
-  <!-- Naar en skabelon kopieres ind i MyGames/, foelger dens program.cs med. Den kopi er
-       bare en ekstra spil-start og maa ikke kompileres - rodens program.cs er spillet. -->
-  <ItemGroup>
-    <Compile Remove="MyGames\**\program.cs" />
   </ItemGroup>
 
 </Project>

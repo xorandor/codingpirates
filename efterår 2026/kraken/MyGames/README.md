@@ -8,16 +8,16 @@ naar du henter ny kode ned. Du kan lave, aendre og slette lige saa mange filer d
 1. Lav en ny fil her i mappen, fx `Fjende.cs`.
 2. Start filen med `namespace Mine;`
 3. Lad klassen arve fra `Component`.
-4. Brug den i `program.cs`.
+4. Brug den i dit spils `Run()`-metode (fx `MyGames/Pong/PongGame.cs`).
 
 Se `Eksempel.cs.template` for en fil du kan kopiere og bygge videre paa.
 
 ## Et helt spil at starte fra
 
 Skabelonerne i `GameTemplates/` er hele spil. Kopier hele skabelon-mappen **herind** i
-Stifinder eller terminalen - aldrig inde fra Visual Studio - og kopier saa dens
-`program.cs` op i roden oven i din egen. Komponenterne er allerede i namespace `Mine`,
-og kopien af `program.cs` der bliver tilbage herinde, ignorerer motoren af sig selv.
+Stifinder eller terminalen - aldrig inde fra Visual Studio. Hver skabelon har en
+`XxxGame.cs` med en `Run()`-metode der bygger spillet, og din `program.cs` i roden skal
+bare kalde den, fx `PongGame.Run();`. Komponenterne er allerede i namespace `Mine`.
 Opskriften staar i hver skabelons README.
 
 ## Reglerne

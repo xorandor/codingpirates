@@ -8,8 +8,14 @@ vaerten der ejer boldene, saa alle ser praecis de samme. P viser hvem der er med
 
 1. Kopier HELE `Hoppebolde`-mappen ind i `MyGames/` - i **Stifinder** eller terminalen,
    ALDRIG inde fra Visual Studio.
-2. Kopier saa `MyGames/Hoppebolde/program.cs` op i roden af `kraken/` - oven i den der
-   ligger der.
+2. Lav en fil `program.cs` i roden af `kraken/` (eller ret den du har) med een linje:
+
+   ```csharp
+   HoppeboldeGame.Run(args);
+   ```
+
+   `args` er det du skriver efter `dotnet run --` - spillet bruger det til test-genvejene.
+   Selve spillet staar i `MyGames/Hoppebolde/HoppeboldeGame.cs`.
 3. `dotnet run` - og vaelg et spil i listen, eller "Start dit eget spil" oeverst.
 
 Eller nemmest: bed Claude - "kopier Hoppebolde-skabelonen ind som mit spil".

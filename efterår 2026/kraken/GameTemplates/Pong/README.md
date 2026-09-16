@@ -9,8 +9,13 @@ alt sammen lavet af kode, ingen filer.
 1. Kopier HELE `Pong`-mappen ind i `MyGames/` - i **Stifinder** eller terminalen,
    ALDRIG inde fra Visual Studio. (VS aendrer projektfilen naar den kopierer, og saa
    kompilerer dit spil bare ikke, uden fejl.)
-2. Kopier saa `MyGames/Pong/program.cs` op i roden af `kraken/` - oven i den der ligger der.
-   Kopien der bliver tilbage i `MyGames/Pong/` goer ingen skade; motoren ignorerer den.
+2. Lav en fil `program.cs` i roden af `kraken/` (eller ret den du har) med een linje:
+
+   ```csharp
+   PongGame.Run();
+   ```
+
+   Selve spillet - alt det der bliver lagt i motoren - staar i `MyGames/Pong/PongGame.cs`.
 3. `dotnet run`
 
 Eller nemmest: bed Claude - "kopier Pong-skabelonen ind som mit spil".

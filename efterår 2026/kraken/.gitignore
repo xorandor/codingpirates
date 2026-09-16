@@ -1,4 +1,4 @@
-# Din egen komposition af spillet (kun i roden - skabelonernes program.cs SKAL i git).
+# Din egen program.cs i roden - den ene linje der starter dit spil, fx PongGame.Run();
 /program.cs
 
 # Dine egne komponenter. Kommer aldrig i git.

@@ -130,9 +130,12 @@ without pulling from git. Five concepts:
   Gitignored wholesale. Never commit anything from here, and never assume another machine has
   these files. (Renamed from `MyComponents/` on 2026-08-31 — the rename must carry the
   `.gitignore` entry, the tracked README/template inside it, and every mention in `Readme.md`.)
-- **`program.cs`** — the composition. Gitignored. The only place allowed to reference everything.
-  There is no root `program.cs.template` any more (it was the MOENTJAGT game, removed 2026-09-01):
-  the committed starting points are the templates' own `program.cs` files under `GameTemplates/`.
+- **`program.cs`** — the entry point. Gitignored. Since 2026-09-16 it is **one line**:
+  `PongGame.Run();` (or `HoppeboldeGame.Run(args);`). The composition itself lives in the
+  template's `<Name>Game.cs`, a static class in `namespace Mine` with a `Run` method — that file
+  is the only place allowed to reference everything. `Kraken.csproj` has a global
+  `<Using Include="Mine" />` so the one line needs no `using`. There is no root
+  `program.cs.template`; the READMEs state the line.
 
 The spring originals are **not** copied into this folder. If you need to see how something used to
 work, read `forår 2026/network-game/` — it is still in the repo, one directory up. Do not modify
@@ -146,7 +149,12 @@ no-conflicts guarantee: students still never modify tracked files.
 
 Each template folder contains:
 
-- **`program.cs`** — the game's composition.
+- **`<Name>Game.cs`** — the game's composition: `public static class PongGame { public static
+  void Run() { ... game.Run(); } }` in `namespace Mine`. The `Run` name is the convention the
+  root `program.cs` relies on. Take `string[] args` only when the game uses it (Hoppebolde's
+  test bypasses); Pong takes nothing. Replaced the per-template `program.cs` on 2026-09-16
+  because copying a file *over* the root one was the step students fumbled — and two templates
+  in `MyGames/` at once now coexist (distinct class names, no duplicate `Main`).
 - **Component files**, one class per file, written in **`namespace Mine`** so they compile
   unchanged after being copied into `MyGames/`.
 - **`README.md`** (Danish) — three lines on what the game is, the copy instructions, plus a
@@ -155,8 +163,8 @@ Each template folder contains:
 
 Copy flow, done in **Windows Explorer (or the terminal, or by Claude) — never in Visual Studio's
 Solution Explorer**: copy the whole template folder into `MyGames/` (giving e.g.
-`MyGames/Pong/`), then copy its `program.cs` over the root `program.cs`. After that the whole
-game is the student's own, gitignored, free to wreck. The copy itself is a fine first Claude
+`MyGames/Pong/`), then write the one line `PongGame.Run();` into the root `program.cs` (create
+it if missing). After that the whole game is the student's own, gitignored, free to wreck. The copy itself is a fine first Claude
 prompt of the evening ("kopier Pong-skabelonen ind som mit spil").
 
 Why never Solution Explorer: a VS copy-paste of excluded files carries their item metadata along
@@ -171,19 +179,19 @@ out, where it sits in `MyGames/` as ordinary compiled files.
 
 Build rules in `Kraken.csproj`:
 
-- **`<Compile Remove="GameTemplates/**" />`** — the folders contain real `.cs` files including
-  entry points, so without it the build breaks with duplicate `Main`s. Real `.cs` files (not
-  `.template` renames) are deliberate: syntax highlighting for students, and no mass-renaming
-  on copy.
-- **`<Compile Remove="MyGames/**/program.cs" />`** — the whole-folder copy brings the template's
-  `program.cs` along into `MyGames/<Name>/`, and without this rule that stray copy is a second
-  entry point and the build breaks the moment a student follows the instructions. The root
-  `program.cs` is the only composition that compiles.
+- **`<Compile Remove="GameTemplates/**" />`** — the folders contain real `.cs` files, so
+  without it a template and its copy in `MyGames/` would both compile and every class would be
+  defined twice. Real `.cs` files (not `.template` renames) are deliberate: syntax highlighting
+  for students, and no mass-renaming on copy.
+- **`<Using Include="Mine" />`** — global using, so the root `program.cs` can be exactly
+  `PongGame.Run();`.
+- The old `<Compile Remove="MyGames/**/program.cs" />` rule is gone (2026-09-16): templates no
+  longer carry a `program.cs`, so there is no stray second entry point to exclude.
 
-Gitignore rule: the ignore pattern for the root composition must stay **root-anchored** —
-`/program.cs`, not `program.cs`. An unanchored pattern matches at every level and silently keeps
-each template's `program.cs` out of git; that exact mistake shipped Pong without its composition
-once. `git status GameTemplates/` after adding a template is the check.
+Gitignore rule: the ignore pattern for the root entry point is **root-anchored** —
+`/program.cs`. Templates no longer contain a `program.cs`, but keep the anchor anyway; an
+unanchored pattern once silently kept Pong's composition out of git. `git status GameTemplates/`
+after adding a template is still the check.
 
 A template may be shipped **complete** (evening one: copy Pong, then mutate it with Claude) or
 **with a deliberate hole** — the scaffolding components are provided, the game's core component
@@ -317,10 +325,11 @@ and **their own player name** (presets via `Password`/`PlayerName` skip the matc
 `dotnet run -- klient <ip> <navn> [kode]` and `dotnet run -- vaert [kode]`. F3 toggles the 3D
 debug view; P toggles the player box.
 
-**On a fresh checkout there is no `program.cs`** — it is gitignored on purpose. Copy
-a template's `program.cs` (e.g. `GameTemplates/Hoppebolde/program.cs`) to the root as `program.cs`
-before the first `dotnet run`, or the build fails with no entry point. Same for `MyGames/` (only
-its README and template are tracked) and `Assets/mine/`.
+**On a fresh checkout there is no `program.cs`** — it is gitignored on purpose. Copy a template
+folder into `MyGames/` (e.g. `GameTemplates/Hoppebolde/` → `MyGames/Hoppebolde/`) and create the
+root `program.cs` with `HoppeboldeGame.Run(args);` before the first `dotnet run`, or the build
+fails with no entry point. `MyGames/` (only its README and template are tracked) and
+`Assets/mine/` are likewise empty on a fresh checkout.
 
 **Verifying visually on this machine:** GDI screen capture (`CopyFromScreen`) returns a blank white
 rectangle for the raylib window — it cannot read the accelerated surface, and this is true for raw
@@ -329,7 +338,8 @@ mistake for a live one. Synthetic keystrokes (`SendKeys`, `AppActivate`) do not 
 either, so a script cannot press a key.
 
 Kraken has **no screenshot feature**, and does not need one. Nothing in the engine has to change to
-take a picture — put a throwaway component in `program.cs` (gitignored) and capture from `Update`:
+take a picture — put a throwaway component in the game's `<Name>Game.cs` under `MyGames/`
+(gitignored) and capture from `Update`:
 
 ```csharp
 public override void Update(GameContext context)   // ikke Render/RenderUI
@@ -429,9 +439,9 @@ engine events stay, with `SoundEffects` as their consumer.
 
 A one-player Pong, built to find engine gaps. It ships as the first game template:
 **`GameTemplates/Pong/`**, complete including the ball, so it works out of the box after the copy
-flow (whole folder → `MyGames/Pong/`, its `program.cs` copied over the root one — verified
-2026-08-31 with the rename and the `MyGames/**/program.cs` exclusion in place: the stray copy
-compiles as nothing, the ten components compile from `MyGames/Pong/`, and the game renders).
+flow (whole folder → `MyGames/Pong/`, root `program.cs` = `PongGame.Run();` — verified
+2026-09-16 with Pong *and* Hoppebolde both copied into `MyGames/`: builds 0/0 with either one-liner,
+and Pong runs).
 All components are `namespace Mine`, one class per file. `Beskeder.cs` holds the
 contract between the ball and the rest (`IHarRetning` + the `BatRamt`/`Maal`/`BoldenServes`
 records — pure event bus, so a student can delete `Bold.cs` and write their own; the README's

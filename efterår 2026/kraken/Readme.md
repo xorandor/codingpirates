@@ -5,12 +5,14 @@ Spilmotoren vi bygger videre paa i efteraaret 2026.
 ## Kom i gang
 
 1. Hent koden.
-2. Kopier en skabelons `program.cs` op i roden - fx fra `GameTemplates/Pong/` eller
-   `GameTemplates/Hoppebolde/` (se "Hvad er dit, og hvad er faelles" laengere nede).
-3. Skriv `dotnet run`.
+2. Kopier en skabelon-mappe ind i `MyGames/` - fx `GameTemplates/Pong/` (se "Hvad er dit,
+   og hvad er faelles" laengere nede).
+3. Lav en fil `program.cs` i roden med een linje: `PongGame.Run();`
+4. Skriv `dotnet run`.
 
-Det er det. `program.cs` er din fil - den kommer aldrig i git, saa du kan lave lige praecis
-det spil du har lyst til.
+Det er det. `program.cs` og alt i `MyGames/` er dine filer - de kommer aldrig i git, saa du
+kan lave lige praecis det spil du har lyst til. Hver skabelon har en `XxxGame.cs` med en
+`Run()`-metode, og det er den `program.cs` kalder.
 
 ```
 dotnet run     # og er spillet et netvaerksspil, sporger det selv om du vil vaere vaert
@@ -77,7 +79,7 @@ public class Stjerne : Component
 }
 ```
 
-Og saa bruger du den i `program.cs`:
+Og saa bruger du den i dit spils `Run()` (fx `MyGames/Pong/PongGame.cs`):
 
 ```csharp
 game.Add(new Stjerne { Position = new(0, 300, 0), Size = 30, Color = Color.White });
@@ -421,9 +423,9 @@ og resten bygger du selv i `MyGames/`.
 | `Engine/` | motoren. Rort kun i faellesskab. |
 | `Components/` | faelles komponenter. Kommer i git til alle. |
 | `GameTemplates/` | hele spil som skabeloner. Kopieres ud - rettes ALDRIG direkte. |
-| `MyGames/` | **dine egne komponenter.** Kommer aldrig i git. |
+| `MyGames/` | **dine egne spil og komponenter.** Kommer aldrig i git. |
 | `Assets/mine/` | **dine egne billeder og lyde.** Kommer aldrig i git. |
-| `program.cs` | **dit spil.** Kommer aldrig i git. |
+| `program.cs` | **den ene linje der starter dit spil.** Kommer aldrig i git. |
 
 Vil du have et helt spil at starte fra, saa kig i `GameTemplates/` - fx `GameTemplates/Pong/`.
 Saadan kopierer du en skabelon ud (staar ogsaa i skabelonens egen README):
@@ -431,9 +433,12 @@ Saadan kopierer du en skabelon ud (staar ogsaa i skabelonens egen README):
 1. Kopier HELE skabelon-mappen ind i `MyGames/` - i **Stifinder** eller terminalen, ALDRIG
    inde fra Visual Studio. (VS aendrer projektfilen naar den kopierer, og saa kompilerer dit
    spil bare ikke, uden fejl.)
-2. Kopier saa dens `program.cs` op i roden af `kraken/`, oven i din egen. Kopien der bliver
-   tilbage i `MyGames/` goer ingen skade - motoren ignorerer den.
+2. Skriv i `program.cs` i roden af `kraken/` den ene linje der starter spillet -
+   `PongGame.Run();` for Pong, `HoppeboldeGame.Run(args);` for Hoppebolde. Skabelonens
+   README siger praecis hvad der skal staa.
 3. `dotnet run`. Nu er hele spillet DIT - aendr alt.
+
+Har du flere spil i `MyGames/`, skifter du mellem dem ved at aendre den ene linje.
 
 Ret aldrig i selve skabelonen. Hver skabelons README har ogsaa ideer til hvad du kan aendre.
 
