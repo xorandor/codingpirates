@@ -485,6 +485,16 @@ public class GameEngine
         return true;
     }
 
+    // Skaermene herunder (start, forbinder, indtastning, fejl) tegnes oven paa spillets
+    // egen Background, som et spil kan saette helt moerkt (fx Hoppebolde). Tekstfarverne
+    // skal derfor regnes ud fra baggrunden i stedet for at vaere faste moerke farver.
+    private Color SkaermTekst => ErBaggrundMoerk ? Color.RayWhite : Color.Black;
+    private Color SkaermTekstSvag => ErBaggrundMoerk ? Color.LightGray : Color.DarkGray;
+    private static readonly Color SkaermTekstFremhaevet = Color.SkyBlue;
+
+    private bool ErBaggrundMoerk
+        => 0.299f * Background.R + 0.587f * Background.G + 0.114f * Background.B < 128f;
+
     /// <summary>Venter paa serverens WELCOME. null = velkommen; ellers en dansk fejlbesked.</summary>
     private string? WaitForWelcome()
     {
@@ -499,7 +509,7 @@ public class GameEngine
 
             BeginDrawing();
             ClearBackground(Background);
-            Draw.Text("Forbinder ...", new Vector2(100, 160), 24, Color.DarkGray);
+            Draw.Text("Forbinder ...", new Vector2(100, 160), 24, SkaermTekst);
             EndDrawing();
         }
 
@@ -546,15 +556,15 @@ public class GameEngine
             {
                 bool er = markeret == 0;
                 Draw.Text((er ? "> " : "  ") + "Start dit eget spil", new Vector2(100, y), 24,
-                    er ? Color.DarkBlue : Color.DarkGray);
+                    er ? SkaermTekstFremhaevet : SkaermTekstSvag);
                 y += 64;
             }
 
-            Draw.Text("Spil paa netvaerket:", new Vector2(100, y), 24, Color.Black);
+            Draw.Text("Spil paa netvaerket:", new Vector2(100, y), 24, SkaermTekst);
             y += 50;
 
             if (spil.Count == 0)
-                Draw.Text("Ingen spil fundet endnu ...", new Vector2(100, y), 20, Color.DarkGray);
+                Draw.Text("Ingen spil fundet endnu ...", new Vector2(100, y), 20, SkaermTekstSvag);
 
             for (int i = 0; i < spil.Count; i++)
             {
@@ -562,10 +572,10 @@ public class GameEngine
                 bool er = (medVaertsvalg ? i + 1 : i) == markeret;
                 string raekke = $"{fundet.Title}   hos {fundet.Host}   {fundet.Players} spillere{(fundet.Locked ? "   (kode)" : "")}";
                 Draw.Text((er ? "> " : "  ") + raekke, new Vector2(100, y + i * 30), 20,
-                    er ? Color.DarkBlue : Color.DarkGray);
+                    er ? SkaermTekstFremhaevet : SkaermTekstSvag);
             }
 
-            Draw.Text("Pil op/ned, Enter for at vaelge", new Vector2(100, GetScreenHeight() - 60f), 16, Color.Gray);
+            Draw.Text("Pil op/ned, Enter for at vaelge", new Vector2(100, GetScreenHeight() - 60f), 16, SkaermTekstSvag);
             EndDrawing();
             klar = true;
         }
@@ -714,9 +724,9 @@ public class GameEngine
 
             BeginDrawing();
             ClearBackground(Background);
-            Draw.Text(prompt, new Vector2(100, 160), 24, Color.Black);
-            Draw.Text(input + "_", new Vector2(100, 200), 24, Color.DarkGray);
-            Draw.Text(hint, new Vector2(100, 250), 16, Color.Gray);
+            Draw.Text(prompt, new Vector2(100, 160), 24, SkaermTekst);
+            Draw.Text(input + "_", new Vector2(100, 200), 24, SkaermTekst);
+            Draw.Text(hint, new Vector2(100, 250), 16, SkaermTekstSvag);
             EndDrawing();
             klar = true;
         }
@@ -735,7 +745,7 @@ public class GameEngine
             BeginDrawing();
             ClearBackground(Background);
             Draw.Text(message, new Vector2(100, 160), 24, Color.Red);
-            Draw.Text("Tryk paa en tast for at afslutte", new Vector2(100, 200), 16, Color.DarkGray);
+            Draw.Text("Tryk paa en tast for at afslutte", new Vector2(100, 200), 16, SkaermTekst);
             EndDrawing();
         }
     }
